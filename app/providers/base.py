@@ -60,7 +60,7 @@ class VideoGenerationRequest:
 
     prompt: str
     aspect_ratio: str = "9:16"
-    duration_seconds: int = 18
+    duration_seconds: int = 8
 
 
 @dataclass(frozen=True, slots=True)

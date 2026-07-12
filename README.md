@@ -18,12 +18,14 @@ This repository currently implements the foundation only:
   dependency-free JSON-schema validation;
 - versioned Hindi topic/script prompts, strict output contracts, and routed text
   generation through the specified provider order;
+- a single-clip, 8-second Veo 3.1 Fast provider for Version 1 video generation;
 - mock-only unit tests and validation-only GitHub Actions workflows.
 
 The text layer contains tested HTTP adapters for Groq Qwen3-32B, NVIDIA NIM
 DeepSeek-R1, and Gemini 2.5 Flash. They are constructed from environment-only
-configuration and are invoked only through `ProviderRouter`. No video, upload,
-notification, browser automation, or deployment integration exists yet.
+configuration and are invoked only through `ProviderRouter`. The video layer
+contains a tested Veo 3.1 Fast adapter. No upload, notification, browser
+automation, or deployment integration exists yet.
 
 The text-generation milestone is verified with `ruff`, `black --check`,
 `pytest`, and an enforced 90% coverage gate. The validation workflows run the
@@ -84,3 +86,12 @@ Flash. `ContentGenerator` loads the versioned templates in `app/prompts/`,
 generates one topic or script through the router, and validates the strict JSON
 contract before returning typed results. Invalid provider output is retried once
 and then eligible for provider fallback.
+
+## Version 1 video generation
+
+Version 1 generates one high-quality portrait (`9:16`) clip per day. Its default
+duration is `8` seconds and may only be configured to Veo-supported 4, 6, or
+8-second lengths through `VIDEO_DURATION_SECONDS`. `VeoVideoProvider` creates,
+polls, and downloads a single Veo 3.1 Fast operation through the Gemini API.
+The duration-aware request contract allows Version 2 to add longer native
+providers or multi-clip composition without changing an orchestrator caller.

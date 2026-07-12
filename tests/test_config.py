@@ -18,6 +18,7 @@ def test_load_config_returns_redacted_safe_summary(
     assert configuration.data_directory == project_root / "data"
     assert configuration.default_language == "hi"
     assert configuration.default_provider_policy == "fallback_allowed"
+    assert configuration.video_duration_seconds == 8
     assert "test-groq-key" not in str(configuration.redacted_summary())
     assert configuration.redacted_summary()["qwen_configured"] is False
 
@@ -56,3 +57,16 @@ def test_load_config_rejects_an_invalid_provider_policy(
         load_config(required_environment, project_root)
 
     assert raised.value.error.code == "invalid_provider_policy"
+
+
+def test_load_config_rejects_unsupported_single_clip_duration(
+    required_environment: dict[str, str], project_root: Path
+) -> None:
+    """Version 1 permits only the supported single-clip video durations."""
+
+    required_environment["VIDEO_DURATION_SECONDS"] = "15"
+
+    with pytest.raises(ConfigurationError) as raised:
+        load_config(required_environment, project_root)
+
+    assert raised.value.error.code == "invalid_video_duration"

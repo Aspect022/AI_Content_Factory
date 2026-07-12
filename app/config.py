@@ -42,6 +42,7 @@ class AppConfig:
     whisper_model_size: str | None
     default_language: str
     default_provider_policy: str
+    video_duration_seconds: int
     data_directory: Path
 
     def redacted_summary(self) -> dict[str, object]:
@@ -51,6 +52,7 @@ class AppConfig:
             "run_timezone": self.run_timezone,
             "default_language": self.default_language,
             "default_provider_policy": self.default_provider_policy,
+            "video_duration_seconds": self.video_duration_seconds,
             "qwen_configured": self.qwen_api_key is not None,
             "dreamina_configured": self.dreamina_api_key is not None,
             "whisper_model_size": self.whisper_model_size,
@@ -114,6 +116,8 @@ def load_config(
             )
         )
 
+    video_duration_seconds = _video_duration(values)
+
     root = (project_root or Path.cwd()).resolve()
     return AppConfig(
         groq_api_key=values["GROQ_API_KEY"].strip(),
@@ -130,6 +134,7 @@ def load_config(
         whisper_model_size=_optional_value(values, "WHISPER_MODEL_SIZE"),
         default_language=values.get("DEFAULT_LANGUAGE", "hi").strip() or "hi",
         default_provider_policy=policy,
+        video_duration_seconds=video_duration_seconds,
         data_directory=root / "data",
     )
 
@@ -137,3 +142,30 @@ def load_config(
 def _optional_value(values: Mapping[str, str], name: str) -> str | None:
     value = values.get(name, "").strip()
     return value or None
+
+
+def _video_duration(values: Mapping[str, str]) -> int:
+    """Load the single-clip Version 1 duration supported by Veo."""
+
+    raw_value = values.get("VIDEO_DURATION_SECONDS", "8").strip()
+    try:
+        duration = int(raw_value)
+    except ValueError as error:
+        raise ConfigurationError(
+            ErrorInfo(
+                code="invalid_video_duration",
+                message="VIDEO_DURATION_SECONDS must be 4, 6, or 8",
+                retriable=False,
+                failure_step="configuration",
+            )
+        ) from error
+    if duration not in {4, 6, 8}:
+        raise ConfigurationError(
+            ErrorInfo(
+                code="invalid_video_duration",
+                message="VIDEO_DURATION_SECONDS must be 4, 6, or 8",
+                retriable=False,
+                failure_step="configuration",
+            )
+        )
+    return duration

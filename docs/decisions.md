@@ -59,3 +59,11 @@ Topic and script prompts are versioned files under `app/prompts/`. Their JSON
 responses are validated at the service boundary before typed `Topic` or `Script`
 objects are returned. This makes a malformed provider response a structured,
 recoverable provider failure while preserving the original provider boundary.
+
+## Version 1 video duration
+
+Version 1 generates one 8-second clip rather than assembling multiple clips.
+`VIDEO_DURATION_SECONDS` accepts only 4, 6, or 8 and defaults to 8. The generic
+video request retains a duration field so Version 2 can add a longer native
+provider or an internal composition strategy without requiring orchestrator
+changes.

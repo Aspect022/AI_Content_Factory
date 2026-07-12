@@ -11,6 +11,8 @@ flowchart TD
     E --> H[Gemini 2.5 Flash]
     D --> N[ContentGenerator]
     N --> O[Versioned prompts and schemas]
+    D --> Q[VeoVideoProvider]
+    Q --> R[One 8-second 9:16 clip]
     I[Pipeline event] --> J[RunLogger]
     J --> K[Structured stdout JSON]
     J --> L[SQLite runs table]
@@ -36,6 +38,9 @@ flowchart TD
   provider chain; adapters use injected HTTP transports in tests.
 - `app.utils.retry` owns retry classification and configurable exponential
   backoff; `app.utils.jsonschema` validates provider output contracts.
+- `app.providers.veo_provider` owns a single Veo 3.1 Fast long-running job:
+  create, poll, and download. Its duration-aware request preserves a Version 2
+  multi-clip or longer-native extension point without changing orchestration.
 - `app.storage` owns typed, parameterized repositories for the four required
   SQLite tables.
 
@@ -56,7 +61,6 @@ validation events.
 
 ## Deferred boundaries
 
-Video generation, uploads, notifications, analytics collection, and Git commits
-are intentionally deferred to their named milestones. This preserves the
-required one-responsibility boundaries and avoids guessing any third-party API
-behavior.
+Uploads, notifications, analytics collection, and Git commits are intentionally
+deferred to their named milestones. This preserves the required
+one-responsibility boundaries and avoids guessing any third-party API behavior.
