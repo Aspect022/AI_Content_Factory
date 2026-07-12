@@ -82,8 +82,8 @@ def test_text_providers_use_their_official_endpoints_and_parse_json(
     assert provider.health_check().available is True
 
 
-def test_groq_uses_structured_output_and_gemini_uses_response_schema() -> None:
-    """The providers use their distinct official JSON-output controls."""
+def test_groq_and_gemini_use_compatible_json_object_controls() -> None:
+    """Provider-independent validation avoids unsupported remote schema subsets."""
 
     captured: list[dict[str, object]] = []
 
@@ -98,17 +98,10 @@ def test_groq_uses_structured_output_and_gemini_uses_response_schema() -> None:
     GroqTextProvider("key", transport=transport).generate_json(REQUEST)
     GeminiTextProvider("key", transport=transport).generate_json(REQUEST)
 
-    assert captured[0]["response_format"] == {
-        "type": "json_schema",
-        "json_schema": {
-            "name": "shorts_content",
-            "strict": True,
-            "schema": REQUEST.schema,
-        },
-    }
+    assert captured[0]["response_format"] == {"type": "json_object"}
+    assert "reasoning_effort" not in captured[0]
     assert captured[1]["generationConfig"] == {
         "responseMimeType": "application/json",
-        "responseSchema": REQUEST.schema,
     }
 
 

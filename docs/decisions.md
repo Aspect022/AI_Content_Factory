@@ -87,3 +87,12 @@ The runtime does not read `GITHUB_TOKEN` as application configuration. The
 daily workflow uses GitHub Actions' automatically provided token through
 checkout credentials to commit successful JSON run artifacts. Its permissions
 are limited to `contents: write`; no personal access token is required.
+
+## Portable text JSON mode
+
+The application validates every generated topic and script against its local
+JSON contract. Groq Qwen3-32B therefore uses Groq's supported JSON Object Mode,
+not the model-limited `json_schema` mode or a Qwen-incompatible
+`reasoning_effort` value. Gemini uses JSON MIME output without sending the
+project's full JSON Schema to a provider-specific schema subset. This preserves
+the required strict validation while allowing router fallback across providers.

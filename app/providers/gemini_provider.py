@@ -47,10 +47,18 @@ class GeminiTextProvider:
             self._endpoint,
             {"x-goog-api-key": self._api_key},
             {
-                "contents": [{"parts": [{"text": request.prompt}]}],
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": f"{request.prompt}\n"
+                                "Return only one valid JSON object."
+                            }
+                        ]
+                    }
+                ],
                 "generationConfig": {
                     "responseMimeType": "application/json",
-                    "responseSchema": request.schema,
                 },
             },
             transport=self._transport,

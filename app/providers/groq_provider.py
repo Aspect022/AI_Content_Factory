@@ -42,16 +42,15 @@ class GroqTextProvider:
 
         payload = {
             "model": self.model,
-            "messages": [{"role": "user", "content": request.prompt}],
-            "reasoning_effort": "none",
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "shorts_content",
-                    "strict": True,
-                    "schema": request.schema,
-                },
-            },
+            "messages": [
+                {
+                    "role": "user",
+                    "content": (
+                        f"{request.prompt}\nReturn only one valid JSON object."
+                    ),
+                }
+            ],
+            "response_format": {"type": "json_object"},
         }
         response = post_json(
             self._endpoint,
