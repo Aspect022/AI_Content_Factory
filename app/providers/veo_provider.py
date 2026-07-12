@@ -30,17 +30,23 @@ VideoTransport = Callable[
 class VeoVideoProvider:
     """Generate one 4, 6, or 8-second portrait clip with Veo 3.1 Fast."""
 
-    name = "veo_3_1_fast"
-    priority = 1
-    model = "veo-3.1-fast-generate-preview"
     _base_url = "https://generativelanguage.googleapis.com/v1beta"
 
     def __init__(
-        self, api_key: str, *, transport: VideoTransport | None = None
+        self,
+        api_key: str,
+        *,
+        name: str = "google_flow",
+        priority: int = 1,
+        model: str = "veo-3.1-fast-generate-preview",
+        transport: VideoTransport | None = None,
     ) -> None:
         """Create the adapter with a Gemini API key and optional test transport."""
 
         self._api_key = api_key
+        self.name = name
+        self.priority = priority
+        self.model = model
         self._transport = transport or _standard_transport
 
     def health_check(self) -> ProviderHealth:

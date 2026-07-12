@@ -13,6 +13,10 @@ flowchart TD
     N --> O[Versioned prompts and schemas]
     D --> Q[VeoVideoProvider]
     Q --> R[One 8-second 9:16 clip]
+    D --> S[VideoGenerationService]
+    S --> T[VideoResult local MP4]
+    T --> U[UploadProvider]
+    U --> V[Delete MP4 only after success]
     I[Pipeline event] --> J[RunLogger]
     J --> K[Structured stdout JSON]
     J --> L[SQLite runs table]
@@ -41,6 +45,10 @@ flowchart TD
 - `app.providers.veo_provider` owns a single Veo 3.1 Fast long-running job:
   create, poll, and download. Its duration-aware request preserves a Version 2
   multi-clip or longer-native extension point without changing orchestration.
+- `app.video.factory` builds ordered video providers from JSON environment
+  profiles. `app.orchestrator` receives only `VideoGenerationService`,
+  `UploadProvider`, and `NotificationProvider` interfaces; it has no vendor
+  provider or model knowledge.
 - `app.storage` owns typed, parameterized repositories for the four required
   SQLite tables.
 

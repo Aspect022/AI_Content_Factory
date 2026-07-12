@@ -10,6 +10,8 @@ htmlcov/
 .env
 .venv/
 venv/
+*youtube-oauth*.json
+youtube-token.json
 
 # Generated runtime data that must never be committed
 data/database.sqlite

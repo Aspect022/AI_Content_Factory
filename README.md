@@ -50,6 +50,31 @@ To validate configuration without exposing any secret value:
 python -m app.main
 ```
 
+## One-time YouTube authorization
+
+Create a Desktop OAuth client in Google Cloud, enable the YouTube Data API and
+YouTube Analytics API, and download its client JSON outside this repository.
+Then run the local, interactive bootstrap command:
+
+```powershell
+python -m app.main youtube-auth --client-secrets-file C:\secure\client_secret.json --token-output-file C:\secure\youtube-token.json
+```
+
+The browser opens for consent. The command writes the refresh token to the
+chosen secret file without printing it. Copy its `refresh_token` value to the
+`YOUTUBE_REFRESH_TOKEN` GitHub secret, then securely delete the local token
+file when no longer needed.
+
+## Automated runtime
+
+`daily.yml` validates the project, validates all required secrets through the
+application configuration, then runs `python -m app.main run`. It preserves JSON
+run logs as workflow artifacts and uploads the temporary MP4 only when the run
+fails. The manual workflow exposes the same path with `mode: publish`. Successful
+uploads use the official YouTube Data API client, include `#shorts`, and delete
+the local MP4 only after YouTube returns a confirmed video ID. Telegram messages
+include upload status, selected video provider, generation time, and URL.
+
 ## Storage
 
 - `data/database.sqlite` contains the queryable run state and is never
@@ -64,7 +89,8 @@ python -m app.main
 The Engineering Specification controls provider ordering:
 
 1. Text: Groq Qwen3-32B, then NVIDIA NIM DeepSeek-R1, then Gemini 2.5 Flash.
-2. Video: Veo 3.1 Fast, then Wan 2.7, Seedance 2.5, then Veo 3.1 Lite.
+2. Video profiles: Google Flow Quality, OpenRouter Video, then Google Flow
+   Fast/Lite, configured entirely through `VIDEO_PROVIDER_PROFILES_JSON`.
 
 See [the architecture notes](docs/architecture.md) and
 [recorded specification decisions](docs/decisions.md).
@@ -95,3 +121,13 @@ duration is `8` seconds and may only be configured to Veo-supported 4, 6, or
 polls, and downloads a single Veo 3.1 Fast operation through the Gemini API.
 The duration-aware request contract allows Version 2 to add longer native
 providers or multi-clip composition without changing an orchestrator caller.
+
+## Video profiles and credentials
+
+`VIDEO_PROVIDER_PROFILES_JSON` defines provider order, provider type, model, and
+the environment variable that supplies each profile's key. This allows multiple
+Google Flow profiles without embedding credentials or model names in the
+orchestrator. Configure separate `GEMINI_API_KEY` and `GEMINI_FALLBACK_API_KEY`
+values for the main and fallback Flow profiles, plus separate
+`OPENROUTER_API_KEY` and `OPENROUTER_FALLBACK_API_KEY` values. OpenRouter is
+registered only by the video factory and is never part of text generation.

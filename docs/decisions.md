@@ -67,3 +67,16 @@ Version 1 generates one 8-second clip rather than assembling multiple clips.
 video request retains a duration field so Version 2 can add a longer native
 provider or an internal composition strategy without requiring orchestrator
 changes.
+
+## Configuration-driven video routing
+
+The daily orchestrator never imports or selects a concrete video provider. Video
+profiles are read from `VIDEO_PROVIDER_PROFILES_JSON` in priority order and may
+contain multiple Google Flow profiles plus OpenRouter. The initial environment
+configuration places a quality Flow profile first, OpenRouter video second, and
+a Flow Fast/Lite profile last. OpenRouter is confined to `OpenRouterVideoProvider`
+and is not registered by the text-generation composition root.
+
+Each profile references a key environment variable by name. Separate main and
+fallback keys are required for Gemini and OpenRouter so revocation or quota loss
+can be handled through a profile change rather than code edits.

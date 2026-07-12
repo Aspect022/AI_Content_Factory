@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - validation
+          - publish
 
 permissions:
   contents: read
@@ -17,3 +18,8 @@ permissions:
 jobs:
   validate:
     uses: ./.github/workflows/reusable-validation.yml
+  publish:
+    if: inputs.mode == 'publish'
+    needs: validate
+    uses: ./.github/workflows/daily.yml
+    secrets: inherit

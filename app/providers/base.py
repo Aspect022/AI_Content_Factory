@@ -111,6 +111,8 @@ class UploadRequest:
     title: str
     description: str
     tags: tuple[str, ...]
+    category_id: str = "22"
+    privacy_status: str = "private"
 
 
 @dataclass(frozen=True, slots=True)

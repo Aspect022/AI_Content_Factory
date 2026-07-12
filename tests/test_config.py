@@ -19,6 +19,12 @@ def test_load_config_returns_redacted_safe_summary(
     assert configuration.default_language == "hi"
     assert configuration.default_provider_policy == "fallback_allowed"
     assert configuration.video_duration_seconds == 8
+    assert [profile.name for profile in configuration.video_provider_profiles] == [
+        "flow_quality",
+        "openrouter",
+        "flow_fallback",
+    ]
+    assert configuration.video_provider_profiles[1].model == "alibaba/wan-2.6:free"
     assert "test-groq-key" not in str(configuration.redacted_summary())
     assert configuration.redacted_summary()["qwen_configured"] is False
 
