@@ -1,0 +1,19 @@
+name: Manual pipeline validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Milestone 1 supports validation only."
+        required: true
+        default: validation
+        type: choice
+        options:
+          - validation
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: ./.github/workflows/reusable-validation.yml

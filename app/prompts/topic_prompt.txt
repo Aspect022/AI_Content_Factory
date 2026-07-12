@@ -1,0 +1,8 @@
+Generate exactly one educational Hindi health-and-body-explainer YouTube Short topic.
+
+Use the requested pillar when it is specific: $pillar
+Choose only from: Sleep, Tea and coffee, Sugar, Liver, Brain, Heart, Gut,
+Exercise, Hydration, Daily habits.
+
+The Short must be 15–20 seconds, start with a conversational hook, and avoid
+unsupported medical claims or diagnostic advice. Return only the requested JSON.

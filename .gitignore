@@ -1,0 +1,25 @@
+# Python bytecode and local tooling caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local secrets and environments
+.env
+.venv/
+venv/
+
+# Generated runtime data that must never be committed
+data/database.sqlite
+data/database.sqlite-*
+data/videos/*
+data/captions/*
+!data/videos/.gitkeep
+!data/captions/.gitkeep
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

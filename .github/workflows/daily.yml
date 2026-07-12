@@ -1,0 +1,14 @@
+name: Daily pipeline validation
+
+on:
+  schedule:
+    # 08:00 Asia/Kolkata, expressed in UTC for GitHub Actions cron.
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: ./.github/workflows/reusable-validation.yml

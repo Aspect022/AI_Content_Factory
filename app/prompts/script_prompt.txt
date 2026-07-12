@@ -1,0 +1,11 @@
+Write one concise Hindi YouTube Short for this educational health topic.
+
+Pillar: $pillar
+Topic: $topic
+Required hook: $hook
+Target duration: $estimated_seconds seconds
+
+Use conversational Hindi, a strong first 1–2 second hook, one easy-to-visualize
+explanation, and no long outro. Avoid unsupported medical claims, diagnoses, and
+medical certainty. Include concise YouTube metadata, visual direction, voice
+direction, and safety notes. Return only the requested JSON.

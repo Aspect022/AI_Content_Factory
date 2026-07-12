@@ -1,0 +1,28 @@
+name: Monthly pipeline validation
+
+on:
+  # GitHub Actions cron cannot directly express the last calendar day.
+  schedule:
+    - cron: "30 2 28-31 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  last-day-check:
+    runs-on: ubuntu-latest
+    outputs:
+      is_last_day: ${{ steps.calendar.outputs.is_last_day }}
+    steps:
+      - id: calendar
+        run: |
+          if [ "$(date -u -d tomorrow +%d)" = "01" ]; then
+            echo "is_last_day=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_last_day=false" >> "$GITHUB_OUTPUT"
+          fi
+  validate:
+    needs: last-day-check
+    if: needs.last-day-check.outputs.is_last_day == 'true' || github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/reusable-validation.yml

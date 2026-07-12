@@ -1,0 +1,5 @@
+# Development and CI tooling. Runtime Milestone 1 uses only the Python standard library.
+black>=24.0
+pytest>=8.0
+pytest-cov>=5.0
+ruff>=0.6

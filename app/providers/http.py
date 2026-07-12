@@ -1,0 +1,112 @@
+"""Small injectable HTTP transport used by concrete provider adapters."""
+
+from __future__ import annotations
+
+import json
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+from app.exceptions import (
+    ProviderAuthenticationError,
+    ProviderError,
+    ProviderResponseError,
+    ProviderUnavailableError,
+    QuotaExceededError,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class HttpResponse:
+    """A provider HTTP response normalized for injectable test transports."""
+
+    status_code: int
+    body: str
+
+
+HttpTransport = Callable[[str, Mapping[str, str], dict[str, object]], HttpResponse]
+
+
+def post_json(
+    url: str,
+    headers: Mapping[str, str],
+    payload: dict[str, object],
+    *,
+    transport: HttpTransport | None = None,
+) -> dict[str, object]:
+    """POST JSON through the injected or standard-library transport."""
+
+    response = (transport or _standard_transport)(url, headers, payload)
+    if response.status_code >= 400:
+        _raise_for_status(response.status_code)
+    try:
+        decoded = json.loads(response.body)
+    except json.JSONDecodeError as error:
+        raise ProviderResponseError.from_message(
+            code="invalid_provider_json",
+            message="The provider response was not valid JSON.",
+            retriable=True,
+            failure_step="text_generation",
+        ) from error
+    if not isinstance(decoded, dict):
+        raise ProviderResponseError.from_message(
+            code="invalid_provider_response",
+            message="The provider response must be a JSON object.",
+            retriable=True,
+            failure_step="text_generation",
+        )
+    return decoded
+
+
+def _standard_transport(
+    url: str, headers: Mapping[str, str], payload: dict[str, object]
+) -> HttpResponse:
+    request = Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", **headers},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=60) as response:  # noqa: S310
+            return HttpResponse(response.status, response.read().decode("utf-8"))
+    except HTTPError as error:
+        return HttpResponse(error.code, error.read().decode("utf-8", errors="replace"))
+    except (TimeoutError, URLError) as error:
+        raise ProviderUnavailableError.from_message(
+            code="provider_network_error",
+            message="The provider could not be reached.",
+            retriable=True,
+            failure_step="text_generation",
+        ) from error
+
+
+def _raise_for_status(status_code: int) -> None:
+    if status_code == 429:
+        raise QuotaExceededError.from_message(
+            code="provider_quota_exhausted",
+            message="The provider reported no available quota.",
+            retriable=False,
+            failure_step="text_generation",
+        )
+    if status_code in {401, 403}:
+        raise ProviderAuthenticationError.from_message(
+            code="provider_authentication_failed",
+            message="The provider rejected its configured credentials.",
+            retriable=False,
+            failure_step="text_generation",
+        )
+    if status_code >= 500:
+        raise ProviderUnavailableError.from_message(
+            code="provider_server_error",
+            message="The provider returned a transient server error.",
+            retriable=True,
+            failure_step="text_generation",
+        )
+    raise ProviderError.from_message(
+        code="provider_request_failed",
+        message="The provider rejected the text generation request.",
+        retriable=False,
+        failure_step="text_generation",
+    )
