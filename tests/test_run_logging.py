@@ -1,6 +1,7 @@
 """Tests for JSON, SQLite, and stdout-compatible structured run logging."""
 
 import json
+import logging
 import sqlite3
 from contextlib import closing
 from datetime import date
@@ -82,6 +83,31 @@ def test_run_logger_persists_structured_failure(tmp_path: Path) -> None:
         ).fetchone()[0]
 
     assert json.loads(error_json) == error.to_dict()
+
+
+def test_run_logger_emits_structured_failure_details(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Actions stdout receives the same secret-safe failure data as artifacts."""
+
+    logger = RunLogger(tmp_path / "database.sqlite", tmp_path / "runs")
+    with caplog.at_level(logging.INFO, logger="ai_shorts_factory.run"):
+        started = logger.start_run(date(2026, 7, 12))
+        logger.update_run(
+            started,
+            status=RunStatus.FAILED,
+            failure_step="text_generation",
+            error=ErrorInfo(
+                code="provider_request_failed",
+                message="gemini: request rejected (HTTP 404).",
+                retriable=False,
+                failure_step="text_generation",
+            ),
+        )
+
+    event = json.loads(caplog.records[-1].message)
+    assert event["failure_step"] == "text_generation"
+    assert event["error"]["code"] == "provider_request_failed"
 
 
 def test_run_logger_rejects_a_failure_without_error_information(tmp_path: Path) -> None:

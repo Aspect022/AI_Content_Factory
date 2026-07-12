@@ -116,6 +116,8 @@ class RunLogger:
                     "provider": record.provider,
                     "model": record.model,
                     "retry_count": record.retry_count,
+                    "failure_step": record.failure_step,
+                    "error": (None if record.error is None else record.error.to_dict()),
                 },
                 sort_keys=True,
             )

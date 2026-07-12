@@ -115,7 +115,10 @@ def _raise_for_status(status_code: int, body: str = "") -> None:
         )
     raise ProviderError.from_message(
         code="provider_request_failed",
-        message="The provider rejected the text generation request.",
+        message=(
+            "The provider rejected the text generation request "
+            f"(HTTP {status_code})."
+        ),
         retriable=False,
         failure_step="text_generation",
     )
