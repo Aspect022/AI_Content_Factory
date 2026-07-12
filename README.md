@@ -27,7 +27,7 @@ This repository implements the production Version 1 pipeline:
   and failed-MP4 artifact preservation;
 - mock-backed provider tests and a complete pipeline integration test.
 
-The text layer contains tested HTTP adapters for Groq Qwen3-32B, NVIDIA NIM
+The text layer contains tested HTTP adapters for Groq Llama 3.1 8B Instant, NVIDIA NIM
 DeepSeek-R1, and Gemini 2.5 Flash. They are constructed from environment-only
 configuration and are invoked only through `ProviderRouter`. The orchestrator
 depends only on provider-neutral text, video, upload, and notification contracts.
@@ -94,7 +94,8 @@ ID. Telegram messages include status, selected provider, generation time, and UR
 
 The Engineering Specification controls provider ordering:
 
-1. Text: Groq Qwen3-32B, then NVIDIA NIM DeepSeek-R1, then Gemini 2.5 Flash.
+1. Text: Groq Llama 3.1 8B Instant, then NVIDIA NIM DeepSeek-R1, then Gemini
+   2.5 Flash.
 2. Video profiles: Google Flow Quality, OpenRouter Video, then Google Flow
    Fast/Lite, configured entirely through `VIDEO_PROVIDER_PROFILES_JSON`.
 
@@ -113,7 +114,7 @@ failures are not retried.
 ## Text generation
 
 `app.content.factory.build_content_generator` composes the only permitted daily
-text sequence: Groq Qwen3-32B, then NVIDIA NIM DeepSeek-R1, then Gemini 2.5
+text sequence: Groq Llama 3.1 8B Instant, then NVIDIA NIM DeepSeek-R1, then Gemini 2.5
 Flash. `ContentGenerator` loads the versioned templates in `app/prompts/`,
 generates one topic or script through the router, and validates the strict JSON
 contract before returning typed results. Invalid provider output is retried once

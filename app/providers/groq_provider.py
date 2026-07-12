@@ -1,4 +1,4 @@
-"""Groq Qwen3-32B text adapter using Groq's official chat endpoint."""
+"""Groq Llama 3.1 8B text adapter using Groq's official chat endpoint."""
 
 from __future__ import annotations
 
@@ -15,11 +15,11 @@ from app.providers.http import HttpTransport, post_json
 
 
 class GroqTextProvider:
-    """Generate schema-bound text through Groq's Qwen3-32B model."""
+    """Generate schema-bound text through Groq's free-tier Llama 3.1 8B model."""
 
-    name = "groq_qwen3_32b"
+    name = "groq_llama_3_1_8b"
     priority = 1
-    model = "qwen/qwen3-32b"
+    model = "llama-3.1-8b-instant"
     _endpoint = "https://api.groq.com/openai/v1/chat/completions"
 
     def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:

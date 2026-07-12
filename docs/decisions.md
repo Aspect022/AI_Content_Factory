@@ -47,7 +47,7 @@ than changing the schema.
 ## Text-generation provider order and failure policy
 
 The text composition root registers exactly the Engineering Specification order:
-Groq Qwen3-32B, NVIDIA NIM DeepSeek-R1, then Gemini 2.5 Flash. The content
+Groq Llama 3.1 8B Instant, NVIDIA NIM DeepSeek-R1, then Gemini 2.5 Flash. The content
 service calls only `ProviderRouter`, never a concrete adapter. A transport,
 server, or malformed-output failure is retried once for that provider; after the
 retry budget is exhausted, the router may select the next provider. Authentication
@@ -91,8 +91,15 @@ are limited to `contents: write`; no personal access token is required.
 ## Portable text JSON mode
 
 The application validates every generated topic and script against its local
-JSON contract. Groq Qwen3-32B therefore uses Groq's supported JSON Object Mode,
+JSON contract. Groq Llama 3.1 8B Instant therefore uses Groq's supported JSON Object Mode,
 not the model-limited `json_schema` mode or a Qwen-incompatible
 `reasoning_effort` value. Gemini uses JSON MIME output without sending the
 project's full JSON Schema to a provider-specific schema subset. This preserves
 the required strict validation while allowing router fallback across providers.
+
+## Groq free-tier model override
+
+The owner explicitly replaced the earlier Groq Qwen3-32B text-model choice with
+Groq's free-tier `llama-3.1-8b-instant`. The provider order remains Groq, then
+NVIDIA NIM, then Gemini; OpenRouter remains video-only. The Groq adapter uses
+JSON Object Mode and local schema validation, which this model supports.

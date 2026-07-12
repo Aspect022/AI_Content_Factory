@@ -40,7 +40,7 @@ GEMINI_RESPONSE = {
             GroqTextProvider("groq-key"),
             OPENAI_RESPONSE,
             "https://api.groq.com/openai/v1/chat/completions",
-            "qwen/qwen3-32b",
+            "llama-3.1-8b-instant",
         ),
         (
             NvidiaNimTextProvider("nvidia-key"),

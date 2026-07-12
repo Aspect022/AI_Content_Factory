@@ -6,7 +6,7 @@ flowchart TD
     B --> C[AppConfig]
     C --> D[DailyOrchestrator]
     D --> E[ProviderRouter]
-    E --> F[Groq Qwen3-32B]
+    E --> F[Groq Llama 3.1 8B Instant]
     E --> G[NVIDIA NIM DeepSeek-R1]
     E --> H[Gemini 2.5 Flash]
     D --> N[ContentGenerator]

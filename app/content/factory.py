@@ -13,7 +13,7 @@ from app.utils.retry import RetryManager, RetryPolicy
 
 
 def build_content_generator(configuration: AppConfig) -> ContentGenerator:
-    """Build the Engineering Specification's Groq-to-NVIDIA-to-Gemini chain."""
+    """Build the configured Groq-to-NVIDIA-to-Gemini text provider chain."""
 
     providers: list[TextProvider] = [
         GroqTextProvider(configuration.groq_api_key),
