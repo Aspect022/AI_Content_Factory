@@ -39,6 +39,18 @@ def test_load_config_reports_all_missing_variables(project_root: Path) -> None:
     assert "GROQ_API_KEY" in raised.value.error.message
 
 
+def test_load_config_does_not_require_a_personal_github_token(
+    required_environment: dict[str, str], project_root: Path
+) -> None:
+    """GitHub Actions supplies its built-in token only to the workflow itself."""
+
+    required_environment.pop("GITHUB_TOKEN", None)
+
+    configuration = load_config(required_environment, project_root)
+
+    assert configuration.run_timezone == "Asia/Kolkata"
+
+
 def test_load_config_rejects_an_invalid_timezone(
     required_environment: dict[str, str], project_root: Path
 ) -> None:

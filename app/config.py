@@ -22,7 +22,6 @@ REQUIRED_ENVIRONMENT_VARIABLES = (
     "YOUTUBE_REFRESH_TOKEN",
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_CHAT_ID",
-    "GITHUB_TOKEN",
     "RUN_TIMEZONE",
 )
 
@@ -54,7 +53,6 @@ class AppConfig:
     youtube_refresh_token: str = field(repr=False)
     telegram_bot_token: str = field(repr=False)
     telegram_chat_id: str = field(repr=False)
-    github_token: str = field(repr=False)
     run_timezone: str
     qwen_api_key: str | None = field(repr=False)
     dreamina_api_key: str | None = field(repr=False)
@@ -168,7 +166,6 @@ def load_config(
         youtube_refresh_token=values["YOUTUBE_REFRESH_TOKEN"].strip(),
         telegram_bot_token=values["TELEGRAM_BOT_TOKEN"].strip(),
         telegram_chat_id=values["TELEGRAM_CHAT_ID"].strip(),
-        github_token=values["GITHUB_TOKEN"].strip(),
         run_timezone=timezone,
         qwen_api_key=_optional_value(values, "QWEN_API_KEY"),
         dreamina_api_key=_optional_value(values, "DREAMINA_API_KEY"),

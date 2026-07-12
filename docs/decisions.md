@@ -80,3 +80,10 @@ and is not registered by the text-generation composition root.
 Each profile references a key environment variable by name. Separate main and
 fallback keys are required for Gemini and OpenRouter so revocation or quota loss
 can be handled through a profile change rather than code edits.
+
+## GitHub Actions authentication
+
+The runtime does not read `GITHUB_TOKEN` as application configuration. The
+daily workflow uses GitHub Actions' automatically provided token through
+checkout credentials to commit successful JSON run artifacts. Its permissions
+are limited to `contents: write`; no personal access token is required.

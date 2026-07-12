@@ -1,10 +1,10 @@
-name: Manual pipeline validation
+name: Manual pipeline
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Milestone 1 supports validation only."
+        description: "Run checks only or publish one private Short."
         required: true
         default: validation
         type: choice
@@ -13,7 +13,7 @@ on:
           - publish
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:

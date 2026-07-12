@@ -82,13 +82,18 @@ class YouTubeUploadProvider:
                     str(request.video_path), mimetype="video/mp4", resumable=True
                 ),
             )
-            _, response = insert.next_chunk()
+            response = None
+            while response is None:
+                _, response = insert.next_chunk()
             video_id = None if response is None else response.get("id")
         except (HttpError, KeyError, TypeError, ValueError) as error:
             raise UploadError.from_message(
                 code="youtube_upload_failed",
                 message="YouTube rejected or could not complete the upload.",
-                retriable=isinstance(error, HttpError) and error.resp.status >= 500,
+                retriable=(
+                    isinstance(error, HttpError)
+                    and error.resp.status in {429, 500, 502, 503, 504}
+                ),
                 failure_step="youtube_upload",
             ) from error
         if not isinstance(video_id, str) or not video_id:

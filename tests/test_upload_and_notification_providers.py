@@ -19,7 +19,13 @@ def test_youtube_uploader_returns_confirmed_url_and_adds_shorts(tmp_path: Path) 
     captured: dict[str, object] = {}
 
     class Insert:
-        def next_chunk(self) -> tuple[None, dict[str, str]]:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def next_chunk(self) -> tuple[None, dict[str, str] | None]:
+            self.calls += 1
+            if self.calls == 1:
+                return None, None
             return None, {"id": "video-id"}
 
     class Videos:
