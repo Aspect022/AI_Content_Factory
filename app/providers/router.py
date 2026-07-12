@@ -6,7 +6,12 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-from app.exceptions import ProviderError, ProviderUnavailableError, RetryExhaustedError
+from app.exceptions import (
+    ErrorInfo,
+    ProviderError,
+    ProviderUnavailableError,
+    RetryExhaustedError,
+)
 from app.providers.base import Provider
 from app.utils.retry import RetryManager
 
@@ -81,16 +86,20 @@ class ProviderRouter(Generic[ProviderType]):
             try:
                 value = self._run_operation(operation, provider)
             except ProviderError as error:
-                last_error = error
+                contextual_error = _with_provider_context(provider.name, error)
+                last_error = contextual_error
                 if not self._fallback_allowed or index == len(available) - 1:
-                    raise
+                    raise contextual_error from error
             except RetryExhaustedError as error:
                 last_provider_error = error.__cause__
                 if not isinstance(last_provider_error, ProviderError):
                     raise
-                last_error = last_provider_error
+                contextual_error = _with_provider_context(
+                    provider.name, last_provider_error
+                )
+                last_error = contextual_error
                 if not self._fallback_allowed or index == len(available) - 1:
-                    raise last_provider_error from error
+                    raise contextual_error from error
             else:
                 return RouterResult(provider_name=provider.name, value=value)
 
@@ -106,3 +115,16 @@ class ProviderRouter(Generic[ProviderType]):
         if self._retry_manager is None:
             return operation(provider)
         return self._retry_manager.run(lambda: operation(provider))
+
+
+def _with_provider_context(provider_name: str, error: ProviderError) -> ProviderError:
+    """Preserve the failed provider name in a durable, secret-safe error."""
+
+    return type(error)(
+        ErrorInfo(
+            code=error.error.code,
+            message=f"{provider_name}: {error.error.message}",
+            retriable=error.error.retriable,
+            failure_step=error.error.failure_step,
+        )
+    )

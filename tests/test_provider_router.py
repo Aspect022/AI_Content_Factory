@@ -92,7 +92,23 @@ def test_router_can_disable_fallback() -> None:
     def failed_operation(_provider: MockProvider) -> str:
         raise provider_error(ProviderUnavailableError)
 
-    with pytest.raises(ProviderUnavailableError):
+    with pytest.raises(ProviderUnavailableError, match="primary: Mock provider failed"):
+        router.execute(failed_operation)
+
+
+def test_router_reports_the_final_provider_after_all_fallbacks_fail() -> None:
+    """A terminal provider failure identifies the provider without leaking secrets."""
+
+    router = ProviderRouter(
+        [MockProvider("primary", priority=1), MockProvider("fallback", priority=2)]
+    )
+
+    def failed_operation(_provider: MockProvider) -> str:
+        raise provider_error(ProviderUnavailableError)
+
+    with pytest.raises(
+        ProviderUnavailableError, match="fallback: Mock provider failed"
+    ):
         router.execute(failed_operation)
 
 
