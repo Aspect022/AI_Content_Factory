@@ -128,6 +128,20 @@ def test_http_transport_classifies_provider_statuses(
         )
 
 
+def test_http_transport_classifies_400_credential_rejections() -> None:
+    """Some provider APIs return invalid-key errors as HTTP 400."""
+
+    with pytest.raises(ProviderAuthenticationError):
+        post_json(
+            "https://mock.example",
+            {},
+            {},
+            transport=lambda *_args: HttpResponse(
+                400, '{"error":{"message":"API key not valid"}}'
+            ),
+        )
+
+
 def test_text_provider_rejects_malformed_completion_and_unconfigured_key() -> None:
     """Bad provider payloads are typed errors and empty configuration is unhealthy."""
 

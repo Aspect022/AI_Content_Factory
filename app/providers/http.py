@@ -39,7 +39,7 @@ def post_json(
 
     response = (transport or _standard_transport)(url, headers, payload)
     if response.status_code >= 400:
-        _raise_for_status(response.status_code)
+        _raise_for_status(response.status_code, response.body)
     try:
         decoded = json.loads(response.body)
     except json.JSONDecodeError as error:
@@ -82,7 +82,16 @@ def _standard_transport(
         ) from error
 
 
-def _raise_for_status(status_code: int) -> None:
+def _raise_for_status(status_code: int, body: str = "") -> None:
+    """Raise a typed, secret-safe error for a provider HTTP status."""
+
+    if _is_credential_rejection(body):
+        raise ProviderAuthenticationError.from_message(
+            code="provider_authentication_failed",
+            message="The provider rejected its configured credentials.",
+            retriable=False,
+            failure_step="text_generation",
+        )
     if status_code == 429:
         raise QuotaExceededError.from_message(
             code="provider_quota_exhausted",
@@ -110,3 +119,18 @@ def _raise_for_status(status_code: int) -> None:
         retriable=False,
         failure_step="text_generation",
     )
+
+
+def _is_credential_rejection(body: str) -> bool:
+    """Classify common 400-level credential failures without logging provider text."""
+
+    try:
+        payload = json.loads(body)
+        error = payload.get("error", {}) if isinstance(payload, dict) else {}
+        message = error.get("message", "") if isinstance(error, dict) else ""
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(message, str):
+        return False
+    normalized = message.lower()
+    return "api key" in normalized or "credential" in normalized
