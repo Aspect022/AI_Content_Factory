@@ -185,6 +185,24 @@ def test_openai_compatible_providers_parse_json_wrapped_in_reasoning_text() -> N
         assert provider.generate_json(REQUEST).content == {"topic": "Sleep"}
 
 
+def test_openai_compatible_providers_parse_python_dict_style_output() -> None:
+    """Groq/NVIDIA adapters normalize Python-style dict text into JSON objects."""
+
+    wrapped = {
+        "choices": [
+            {"message": {"content": "{'topic': 'Sleep', 'estimated_seconds': 18,}"}}
+        ]
+    }
+    for provider in (GroqTextProvider("key"), NvidiaNimTextProvider("key")):
+        provider._transport = lambda *_args, response=wrapped: HttpResponse(  # type: ignore[attr-defined]
+            200, json.dumps(response)
+        )
+        assert provider.generate_json(REQUEST).content == {
+            "topic": "Sleep",
+            "estimated_seconds": 18,
+        }
+
+
 def test_gemini_provider_parses_json_fenced_in_markdown() -> None:
     """Gemini adapter can recover a JSON object from fenced markdown text."""
 

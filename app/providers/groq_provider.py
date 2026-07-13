@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from ast import literal_eval
 from datetime import UTC, datetime
 
 from app.exceptions import ProviderResponseError
@@ -105,11 +106,24 @@ def _parse_json_object(content: object) -> dict[str, object]:
         if isinstance(parsed, dict):
             return parsed
         raise TypeError("Provider completion must decode to a JSON object.")
+    try:
+        parsed = literal_eval(content)
+    except (SyntaxError, ValueError):
+        pass
+    else:
+        if isinstance(parsed, dict) and all(isinstance(key, str) for key in parsed):
+            return parsed
 
     fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", content, flags=re.DOTALL)
     if fenced is not None:
-        fenced_parsed = json.loads(fenced.group(1))
-        if isinstance(fenced_parsed, dict):
+        fenced_content = fenced.group(1)
+        try:
+            fenced_parsed = json.loads(fenced_content)
+        except json.JSONDecodeError:
+            fenced_parsed = literal_eval(fenced_content)
+        if isinstance(fenced_parsed, dict) and all(
+            isinstance(key, str) for key in fenced_parsed
+        ):
             return fenced_parsed
         raise TypeError("Fenced completion must decode to a JSON object.")
 
@@ -137,8 +151,14 @@ def _parse_json_object(content: object) -> dict[str, object]:
         elif character == "}":
             depth -= 1
             if depth == 0:
-                parsed_fragment = json.loads(content[first : index + 1])
-                if isinstance(parsed_fragment, dict):
+                fragment = content[first : index + 1]
+                try:
+                    parsed_fragment = json.loads(fragment)
+                except json.JSONDecodeError:
+                    parsed_fragment = literal_eval(fragment)
+                if isinstance(parsed_fragment, dict) and all(
+                    isinstance(key, str) for key in parsed_fragment
+                ):
                     return parsed_fragment
                 raise TypeError("JSON fragment must decode to a JSON object.")
     raise TypeError("No complete JSON object found in provider content.")
