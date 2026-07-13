@@ -39,6 +39,21 @@ def post_json(
 
     response = (transport or _standard_transport)(url, headers, payload)
     if response.status_code >= 400:
+        import sys
+
+        # Log final request URL and response body on failure (excluding
+        # confidential headers/payload)
+        sys.stderr.write(
+            json.dumps(
+                {
+                    "event": "http_request_failed",
+                    "url": url,
+                    "status_code": response.status_code,
+                    "response_body": response.body,
+                }
+            )
+            + "\n"
+        )
         _raise_for_status(response.status_code, response.body)
     try:
         decoded = json.loads(response.body)
