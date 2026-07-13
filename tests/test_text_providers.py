@@ -52,8 +52,8 @@ GEMINI_RESPONSE = {
             GeminiTextProvider("gemini-key"),
             GEMINI_RESPONSE,
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            "gemini-1.5-flash:generateContent",
-            "gemini-1.5-flash",
+            "gemini-3.5-flash:generateContent",
+            "gemini-3.5-flash",
         ),
     ],
 )

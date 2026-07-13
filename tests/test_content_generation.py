@@ -119,4 +119,4 @@ def test_content_factory_composes_with_groq_fallback(
     assert generator._router._providers[0].name == "groq_llama_3_3_70b"
     assert generator._router._providers[1].name == "groq_llama_3_3_70b_fallback"
     assert generator._router._providers[2].name == "nvidia_nim_llama_3_3_70b"
-    assert generator._router._providers[3].name == "gemini_1_5_flash"
+    assert generator._router._providers[3].name == "gemini_3_5_flash"
