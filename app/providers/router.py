@@ -88,6 +88,22 @@ class ProviderRouter(Generic[ProviderType]):
             except ProviderError as error:
                 contextual_error = _with_provider_context(provider.name, error)
                 last_error = contextual_error
+
+                # Log intermediate provider failures so they are visible in run logs
+                import json
+                import sys
+
+                sys.stderr.write(
+                    json.dumps(
+                        {
+                            "event": "provider_attempt_failed",
+                            "provider": provider.name,
+                            "error": error.error.to_dict(),
+                        }
+                    )
+                    + "\n"
+                )
+
                 if not self._fallback_allowed or index == len(available) - 1:
                     raise contextual_error from error
             except RetryExhaustedError as error:
