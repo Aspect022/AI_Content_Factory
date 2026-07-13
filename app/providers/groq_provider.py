@@ -15,29 +15,18 @@ from app.providers.http import HttpTransport, clean_and_parse_json, post_json
 
 
 class GroqTextProvider:
-    """Generate schema-bound text through Groq's free-tier Llama 3.3 70B model."""
+    """Generate schema-bound text through Groq's free-tier Llama 3.1 8B model."""
 
-    name = "groq_llama_3_3_70b"
+    name = "groq_llama_3_1_8b"
     priority = 1
-    model = "llama-3.3-70b-versatile"
+    model = "llama-3.1-8b-instant"
     _endpoint = "https://api.groq.com/openai/v1/chat/completions"
 
-    def __init__(
-        self,
-        api_key: str,
-        *,
-        name: str | None = None,
-        priority: int | None = None,
-        transport: HttpTransport | None = None,
-    ) -> None:
+    def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:
         """Create the adapter with runtime configuration and optional test transport."""
 
         self._api_key = api_key
         self._transport = transport
-        if name is not None:
-            self.name = name
-        if priority is not None:
-            self.priority = priority
 
     def health_check(self) -> ProviderHealth:
         """Report configured readiness without making a billable network request."""

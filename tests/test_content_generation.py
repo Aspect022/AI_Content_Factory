@@ -102,21 +102,3 @@ def test_content_factory_composes_the_configured_text_provider_chain(
     generator = build_content_generator(load_config(required_environment, project_root))
 
     assert isinstance(generator, ContentGenerator)
-
-
-def test_content_factory_composes_with_groq_fallback(
-    required_environment: dict[str, str], project_root: Path
-) -> None:
-    """Composition includes Groq fallback if GROQ_API_FALLBACK is configured."""
-
-    env = dict(required_environment)
-    env["GROQ_API_FALLBACK"] = "test-fallback-key"
-    generator = build_content_generator(load_config(env, project_root))
-
-    assert isinstance(generator, ContentGenerator)
-    # Ensure there are 4 providers registered in the router
-    assert len(generator._router._providers) == 4
-    assert generator._router._providers[0].name == "groq_llama_3_3_70b"
-    assert generator._router._providers[1].name == "groq_llama_3_3_70b_fallback"
-    assert generator._router._providers[2].name == "nvidia_nim_llama_3_3_70b"
-    assert generator._router._providers[3].name == "gemini_3_5_flash"

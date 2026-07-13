@@ -75,6 +75,41 @@ def post_json(
     return decoded
 
 
+def print_diagnostics(
+    url: str, headers: Mapping[str, str], method: str, error: Exception
+) -> None:
+    """Print complete Python traceback and underlying request details for debugging."""
+    import sys
+    import traceback
+    from urllib.error import HTTPError
+
+    sys.stderr.write("=" * 80 + "\n")
+    sys.stderr.write("COMPLETE PYTHON TRACEBACK:\n")
+    traceback.print_exc(file=sys.stderr)
+    sys.stderr.write("-" * 80 + "\n")
+    sys.stderr.write(f"UNDERLYING EXCEPTION TYPE: {type(error).__name__}\n")
+    sys.stderr.write(f"REQUEST URL: {url}\n")
+    sys.stderr.write(f"HTTP METHOD: {method}\n")
+
+    redacted_headers = {}
+    for k, v in headers.items():
+        k_lower = k.lower()
+        if "key" in k_lower or "auth" in k_lower or "token" in k_lower:
+            redacted_headers[k] = "[REDACTED]"
+        else:
+            redacted_headers[k] = v
+    sys.stderr.write(f"REQUEST HEADERS: {redacted_headers}\n")
+
+    if isinstance(error, HTTPError):
+        try:
+            body = error.read().decode("utf-8", errors="replace")
+            sys.stderr.write(f"RESPONSE BODY: {body}\n")
+        except Exception:
+            pass
+    sys.stderr.write("=" * 80 + "\n")
+    sys.stderr.flush()
+
+
 def _standard_transport(
     url: str, headers: Mapping[str, str], payload: dict[str, object]
 ) -> HttpResponse:
@@ -92,14 +127,19 @@ def _standard_transport(
         with urlopen(request, timeout=60) as response:  # noqa: S310
             return HttpResponse(response.status, response.read().decode("utf-8"))
     except HTTPError as error:
+        print_diagnostics(url, req_headers, "POST", error)
         return HttpResponse(error.code, error.read().decode("utf-8", errors="replace"))
     except (TimeoutError, URLError) as error:
+        print_diagnostics(url, req_headers, "POST", error)
         raise ProviderUnavailableError.from_message(
             code="provider_network_error",
             message="The provider could not be reached.",
             retriable=True,
             failure_step="text_generation",
         ) from error
+    except Exception as error:
+        print_diagnostics(url, req_headers, "POST", error)
+        raise error
 
 
 def _raise_for_status(status_code: int, body: str = "") -> None:

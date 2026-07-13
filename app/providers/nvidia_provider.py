@@ -14,29 +14,18 @@ from app.providers.http import HttpTransport, post_json
 
 
 class NvidiaNimTextProvider:
-    """Generate JSON-guided text through NVIDIA NIM Llama 3.3 70B."""
+    """Generate JSON-guided text through NVIDIA NIM DeepSeek-R1."""
 
-    name = "nvidia_nim_llama_3_3_70b"
+    name = "nvidia_nim_deepseek_r1"
     priority = 2
-    model = "meta/llama-3.3-70b-instruct"
+    model = "deepseek-ai/deepseek-r1"
     _endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
 
-    def __init__(
-        self,
-        api_key: str,
-        *,
-        name: str | None = None,
-        priority: int | None = None,
-        transport: HttpTransport | None = None,
-    ) -> None:
+    def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:
         """Create the adapter with runtime configuration and optional test transport."""
 
         self._api_key = api_key
         self._transport = transport
-        if name is not None:
-            self.name = name
-        if priority is not None:
-            self.priority = priority
 
     def health_check(self) -> ProviderHealth:
         """Report configured readiness without making a remote request."""

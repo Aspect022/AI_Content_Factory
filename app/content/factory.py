@@ -17,22 +17,9 @@ def build_content_generator(configuration: AppConfig) -> ContentGenerator:
 
     providers: list[TextProvider] = [
         GroqTextProvider(configuration.groq_api_key),
+        NvidiaNimTextProvider(configuration.nvidia_api_key),
         GeminiTextProvider(configuration.gemini_api_key),
     ]
-    if configuration.groq_api_fallback:
-        providers.append(
-            GroqTextProvider(
-                configuration.groq_api_fallback,
-                name="groq_llama_3_3_70b_fallback",
-                priority=2,
-            )
-        )
-        providers.append(
-            NvidiaNimTextProvider(configuration.nvidia_api_key, priority=3)
-        )
-    else:
-        providers.append(NvidiaNimTextProvider(configuration.nvidia_api_key))
-
     router = ProviderRouter(
         providers,
         fallback_allowed=configuration.default_provider_policy == "fallback_allowed",
