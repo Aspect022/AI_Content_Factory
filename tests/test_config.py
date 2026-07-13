@@ -97,6 +97,10 @@ def test_load_config_allows_single_text_provider_key(
 
     required_environment["NVIDIA_API_KEY"] = ""
     required_environment["GEMINI_API_KEY"] = ""
+    required_environment["VIDEO_PROVIDER_PROFILES_JSON"] = (
+        '[{"name":"openrouter","provider":"openrouter",'
+        '"model":"alibaba/wan-2.6:free","api_key_env":"OPENROUTER_API_KEY"}]'
+    )
 
     configuration = load_config(required_environment, project_root)
 
