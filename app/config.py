@@ -44,6 +44,7 @@ class AppConfig:
     """Validated configuration required by the cloud runtime."""
 
     groq_api_key: str = field(repr=False)
+    groq_api_fallback: str | None = field(repr=False)
     nvidia_api_key: str = field(repr=False)
     gemini_api_key: str = field(repr=False)
     gemini_fallback_api_key: str = field(repr=False)
@@ -157,6 +158,7 @@ def load_config(
     root = (project_root or Path.cwd()).resolve()
     return AppConfig(
         groq_api_key=values["GROQ_API_KEY"].strip(),
+        groq_api_fallback=_optional_value(values, "GROQ_API_FALLBACK"),
         nvidia_api_key=values["NVIDIA_API_KEY"].strip(),
         gemini_api_key=values["GEMINI_API_KEY"].strip(),
         gemini_fallback_api_key=values["GEMINI_FALLBACK_API_KEY"].strip(),

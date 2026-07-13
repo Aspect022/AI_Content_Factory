@@ -22,11 +22,22 @@ class GroqTextProvider:
     model = "llama-3.3-70b-versatile"
     _endpoint = "https://api.groq.com/openai/v1/chat/completions"
 
-    def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        name: str | None = None,
+        priority: int | None = None,
+        transport: HttpTransport | None = None,
+    ) -> None:
         """Create the adapter with runtime configuration and optional test transport."""
 
         self._api_key = api_key
         self._transport = transport
+        if name is not None:
+            self.name = name
+        if priority is not None:
+            self.priority = priority
 
     def health_check(self) -> ProviderHealth:
         """Report configured readiness without making a billable network request."""
