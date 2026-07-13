@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 
 from app.exceptions import ProviderResponseError
@@ -71,7 +72,7 @@ def _openai_content(response: dict[str, object]) -> dict[str, object]:
         choices = response["choices"]
         message = choices[0]["message"]  # type: ignore[index]
         content = message["content"]  # type: ignore[index]
-        parsed = json.loads(content)
+        parsed = _parse_json_object(content)
     except (IndexError, KeyError, TypeError, json.JSONDecodeError) as error:
         raise ProviderResponseError.from_message(
             code="invalid_provider_response",
@@ -87,3 +88,57 @@ def _openai_content(response: dict[str, object]) -> dict[str, object]:
             failure_step="text_generation",
         )
     return parsed
+
+
+def _parse_json_object(content: object) -> dict[str, object]:
+    """Parse a JSON object from provider text, tolerating common wrappers."""
+
+    if isinstance(content, dict):
+        return content
+    if not isinstance(content, str):
+        raise TypeError("Provider content must be text or a JSON object.")
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError:
+        pass
+    else:
+        if isinstance(parsed, dict):
+            return parsed
+        raise TypeError("Provider completion must decode to a JSON object.")
+
+    fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", content, flags=re.DOTALL)
+    if fenced is not None:
+        fenced_parsed = json.loads(fenced.group(1))
+        if isinstance(fenced_parsed, dict):
+            return fenced_parsed
+        raise TypeError("Fenced completion must decode to a JSON object.")
+
+    first = content.find("{")
+    if first < 0:
+        raise TypeError("No JSON object found in provider content.")
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(first, len(content)):
+        character = content[index]
+        if escaped:
+            escaped = False
+            continue
+        if character == "\\":
+            escaped = True
+            continue
+        if character == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            if depth == 0:
+                parsed_fragment = json.loads(content[first : index + 1])
+                if isinstance(parsed_fragment, dict):
+                    return parsed_fragment
+                raise TypeError("JSON fragment must decode to a JSON object.")
+    raise TypeError("No complete JSON object found in provider content.")

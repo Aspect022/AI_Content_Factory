@@ -166,6 +166,49 @@ def test_gemini_provider_rejects_a_malformed_completion() -> None:
         provider.generate_json(REQUEST)
 
 
+def test_openai_compatible_providers_parse_json_wrapped_in_reasoning_text() -> None:
+    """Groq/NVIDIA adapters can recover the JSON object from mixed content text."""
+
+    wrapped = {
+        "choices": [
+            {
+                "message": {
+                    "content": '<think>reasoning</think>\n{"topic":"Sleep"}\nDone.'
+                }
+            }
+        ]
+    }
+    for provider in (GroqTextProvider("key"), NvidiaNimTextProvider("key")):
+        provider._transport = lambda *_args, response=wrapped: HttpResponse(  # type: ignore[attr-defined]
+            200, json.dumps(response)
+        )
+        assert provider.generate_json(REQUEST).content == {"topic": "Sleep"}
+
+
+def test_gemini_provider_parses_json_fenced_in_markdown() -> None:
+    """Gemini adapter can recover a JSON object from fenced markdown text."""
+
+    provider = GeminiTextProvider(
+        "key",
+        transport=lambda *_args: HttpResponse(
+            200,
+            json.dumps(
+                {
+                    "candidates": [
+                        {
+                            "content": {
+                                "parts": [{"text": '```json\n{"topic":"Sleep"}\n```'}]
+                            }
+                        }
+                    ]
+                }
+            ),
+        ),
+    )
+
+    assert provider.generate_json(REQUEST).content == {"topic": "Sleep"}
+
+
 def test_standard_transport_handles_success_http_errors_and_network_errors() -> None:
     """The standard-library transport is covered without making a real request."""
 

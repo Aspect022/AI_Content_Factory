@@ -11,6 +11,7 @@ from app.providers.base import (
     TextGenerationRequest,
     TextGenerationResponse,
 )
+from app.providers.groq_provider import _parse_json_object
 from app.providers.http import HttpTransport, post_json
 
 
@@ -76,7 +77,7 @@ def _gemini_content(response: dict[str, object]) -> dict[str, object]:
         content = candidates[0]["content"]  # type: ignore[index]
         parts = content["parts"]  # type: ignore[index]
         text = parts[0]["text"]  # type: ignore[index]
-        parsed = json.loads(text)
+        parsed = _parse_json_object(text)
     except (IndexError, KeyError, TypeError, json.JSONDecodeError) as error:
         raise ProviderResponseError.from_message(
             code="invalid_provider_response",
