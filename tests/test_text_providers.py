@@ -46,7 +46,7 @@ GEMINI_RESPONSE = {
             NvidiaNimTextProvider("nvidia-key"),
             OPENAI_RESPONSE,
             "https://integrate.api.nvidia.com/v1/chat/completions",
-            "deepseek-ai/deepseek-r1",
+            "meta/llama-3.3-70b-instruct",
         ),
         (
             GeminiTextProvider("gemini-key"),
