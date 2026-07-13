@@ -11,9 +11,6 @@ from pathlib import Path
 from app.exceptions import ConfigurationError, ErrorInfo
 
 REQUIRED_ENVIRONMENT_VARIABLES = (
-    "GROQ_API_KEY",
-    "NVIDIA_API_KEY",
-    "GEMINI_API_KEY",
     "GEMINI_FALLBACK_API_KEY",
     "OPENROUTER_API_KEY",
     "OPENROUTER_FALLBACK_API_KEY",
@@ -43,9 +40,9 @@ class VideoProviderProfile:
 class AppConfig:
     """Validated configuration required by the cloud runtime."""
 
-    groq_api_key: str = field(repr=False)
-    nvidia_api_key: str = field(repr=False)
-    gemini_api_key: str = field(repr=False)
+    groq_api_key: str | None = field(repr=False)
+    nvidia_api_key: str | None = field(repr=False)
+    gemini_api_key: str | None = field(repr=False)
     gemini_fallback_api_key: str = field(repr=False)
     openrouter_api_key: str = field(repr=False)
     openrouter_fallback_api_key: str = field(repr=False)
@@ -141,6 +138,22 @@ def load_config(
             )
         )
 
+    if not any(
+        _optional_value(values, name)
+        for name in ("GROQ_API_KEY", "NVIDIA_API_KEY", "GEMINI_API_KEY")
+    ):
+        raise ConfigurationError(
+            ErrorInfo(
+                code="missing_text_provider_configuration",
+                message=(
+                    "Configure at least one text provider key: GROQ_API_KEY, "
+                    "NVIDIA_API_KEY, or GEMINI_API_KEY."
+                ),
+                retriable=False,
+                failure_step="configuration",
+            )
+        )
+
     video_duration_seconds = _video_duration(values)
     video_provider_profiles = _video_provider_profiles(values)
     privacy_status = values.get("YOUTUBE_PRIVACY_STATUS", "private").strip()
@@ -156,9 +169,9 @@ def load_config(
 
     root = (project_root or Path.cwd()).resolve()
     return AppConfig(
-        groq_api_key=values["GROQ_API_KEY"].strip(),
-        nvidia_api_key=values["NVIDIA_API_KEY"].strip(),
-        gemini_api_key=values["GEMINI_API_KEY"].strip(),
+        groq_api_key=_optional_value(values, "GROQ_API_KEY"),
+        nvidia_api_key=_optional_value(values, "NVIDIA_API_KEY"),
+        gemini_api_key=_optional_value(values, "GEMINI_API_KEY"),
         gemini_fallback_api_key=values["GEMINI_FALLBACK_API_KEY"].strip(),
         openrouter_api_key=values["OPENROUTER_API_KEY"].strip(),
         openrouter_fallback_api_key=values["OPENROUTER_FALLBACK_API_KEY"].strip(),

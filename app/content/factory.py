@@ -15,11 +15,13 @@ from app.utils.retry import RetryManager, RetryPolicy
 def build_content_generator(configuration: AppConfig) -> ContentGenerator:
     """Build the configured Groq-to-NVIDIA-to-Gemini text provider chain."""
 
-    providers: list[TextProvider] = [
-        GroqTextProvider(configuration.groq_api_key),
-        NvidiaNimTextProvider(configuration.nvidia_api_key),
-        GeminiTextProvider(configuration.gemini_api_key),
-    ]
+    providers: list[TextProvider] = []
+    if configuration.groq_api_key:
+        providers.append(GroqTextProvider(configuration.groq_api_key))
+    if configuration.nvidia_api_key:
+        providers.append(NvidiaNimTextProvider(configuration.nvidia_api_key))
+    if configuration.gemini_api_key:
+        providers.append(GeminiTextProvider(configuration.gemini_api_key))
     router = ProviderRouter(
         providers,
         fallback_allowed=configuration.default_provider_policy == "fallback_allowed",

@@ -41,6 +41,8 @@ same quality checks on Python 3.11.
 Copy `.env.example` to your secret manager or GitHub repository secrets. The
 application deliberately does not read `.env` files; every runtime value must
 come from environment variables.
+For text generation, configure at least one of `GROQ_API_KEY`,
+`NVIDIA_API_KEY`, or `GEMINI_API_KEY`.
 
 ```powershell
 python -m pip install -r requirements.txt

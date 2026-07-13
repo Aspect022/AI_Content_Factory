@@ -102,3 +102,17 @@ def test_content_factory_composes_the_configured_text_provider_chain(
     generator = build_content_generator(load_config(required_environment, project_root))
 
     assert isinstance(generator, ContentGenerator)
+
+
+def test_content_factory_registers_only_configured_text_providers(
+    required_environment: dict[str, str], project_root: Path
+) -> None:
+    """Text routing should include only providers with configured credentials."""
+
+    required_environment["GROQ_API_KEY"] = ""
+    required_environment["GEMINI_API_KEY"] = ""
+
+    generator = build_content_generator(load_config(required_environment, project_root))
+    providers = generator._router.available_providers()  # type: ignore[attr-defined]
+
+    assert [provider.name for provider in providers] == ["nvidia_nim_deepseek_r1"]
