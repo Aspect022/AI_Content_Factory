@@ -103,6 +103,7 @@ class ProviderRouter(Generic[ProviderType]):
                     )
                     + "\n"
                 )
+                sys.stderr.flush()
 
                 if not self._fallback_allowed or index == len(available) - 1:
                     raise contextual_error from error

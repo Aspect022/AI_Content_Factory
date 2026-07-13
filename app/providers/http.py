@@ -54,6 +54,7 @@ def post_json(
             )
             + "\n"
         )
+        sys.stderr.flush()
         _raise_for_status(response.status_code, response.body)
     try:
         decoded = json.loads(response.body)
