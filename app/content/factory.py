@@ -5,7 +5,6 @@ from __future__ import annotations
 from app.config import AppConfig
 from app.content.generation import ContentGenerator
 from app.providers.base import TextProvider
-from app.providers.gemini_provider import GeminiTextProvider
 from app.providers.groq_provider import GroqTextProvider
 from app.providers.nvidia_provider import NvidiaNimTextProvider
 from app.providers.router import ProviderRouter
@@ -13,12 +12,11 @@ from app.utils.retry import RetryManager, RetryPolicy
 
 
 def build_content_generator(configuration: AppConfig) -> ContentGenerator:
-    """Build the configured Groq-to-NVIDIA-to-Gemini text provider chain."""
+    """Build the configured Groq-to-NVIDIA text provider chain."""
 
     providers: list[TextProvider] = [
         GroqTextProvider(configuration.groq_api_key),
         NvidiaNimTextProvider(configuration.nvidia_api_key),
-        GeminiTextProvider(configuration.gemini_api_key),
     ]
     router = ProviderRouter(
         providers,
