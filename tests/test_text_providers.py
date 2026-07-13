@@ -40,20 +40,20 @@ GEMINI_RESPONSE = {
             GroqTextProvider("groq-key"),
             OPENAI_RESPONSE,
             "https://api.groq.com/openai/v1/chat/completions",
-            "llama-3.1-8b-instant",
+            "llama-3.3-70b-versatile",
         ),
         (
             NvidiaNimTextProvider("nvidia-key"),
             OPENAI_RESPONSE,
             "https://integrate.api.nvidia.com/v1/chat/completions",
-            "deepseek-ai/deepseek-r1",
+            "meta/llama-3.3-70b-instruct",
         ),
         (
             GeminiTextProvider("gemini-key"),
             GEMINI_RESPONSE,
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            "gemini-2.5-flash:generateContent",
-            "gemini-2.5-flash",
+            "gemini-3.5-flash:generateContent",
+            "gemini-3.5-flash",
         ),
     ],
 )

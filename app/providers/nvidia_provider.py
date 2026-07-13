@@ -14,11 +14,11 @@ from app.providers.http import HttpTransport, post_json
 
 
 class NvidiaNimTextProvider:
-    """Generate JSON-guided text through NVIDIA NIM DeepSeek-R1."""
+    """Generate JSON-guided text through NVIDIA NIM Llama 3.3 70B."""
 
-    name = "nvidia_nim_deepseek_r1"
+    name = "nvidia_nim_llama_3_3_70b"
     priority = 2
-    model = "deepseek-ai/deepseek-r1"
+    model = "meta/llama-3.3-70b-instruct"
     _endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
 
     def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:

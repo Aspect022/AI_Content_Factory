@@ -15,14 +15,14 @@ from app.providers.http import HttpTransport, clean_and_parse_json, post_json
 
 
 class GeminiTextProvider:
-    """Generate schema-bound text through Gemini 2.5 Flash."""
+    """Generate schema-bound text through Gemini 3.5 Flash."""
 
-    name = "gemini_2_5_flash"
+    name = "gemini_3_5_flash"
     priority = 3
-    model = "gemini-2.5-flash"
+    model = "gemini-3.5-flash"
     _endpoint = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        "gemini-2.5-flash:generateContent"
+        "gemini-3.5-flash:generateContent"
     )
 
     def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:

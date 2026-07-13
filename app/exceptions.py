@@ -83,6 +83,10 @@ class ProviderResponseError(ProviderError):
     """Raised when a provider returns malformed or contract-invalid output."""
 
 
+class ProviderTemporaryFailure(ProviderError):
+    """Raised when a provider fails transiently and retries are exhausted."""
+
+
 class UploadError(ApplicationError):
     """Raised when an upload provider cannot complete an upload."""
 

@@ -156,7 +156,7 @@ def _raise_for_status(status_code: int, body: str = "") -> None:
         raise QuotaExceededError.from_message(
             code="provider_quota_exhausted",
             message="The provider reported no available quota.",
-            retriable=False,
+            retriable=True,
             failure_step="text_generation",
         )
     if status_code in {401, 403}:

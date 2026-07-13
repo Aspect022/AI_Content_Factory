@@ -15,11 +15,11 @@ from app.providers.http import HttpTransport, clean_and_parse_json, post_json
 
 
 class GroqTextProvider:
-    """Generate schema-bound text through Groq's free-tier Llama 3.1 8B model."""
+    """Generate schema-bound text through Groq's free-tier Llama 3.3 70B model."""
 
-    name = "groq_llama_3_1_8b"
+    name = "groq_llama_3_3_70b"
     priority = 1
-    model = "llama-3.1-8b-instant"
+    model = "llama-3.3-70b-versatile"
     _endpoint = "https://api.groq.com/openai/v1/chat/completions"
 
     def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:

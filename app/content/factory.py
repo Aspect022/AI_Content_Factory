@@ -23,6 +23,8 @@ def build_content_generator(configuration: AppConfig) -> ContentGenerator:
     router = ProviderRouter(
         providers,
         fallback_allowed=configuration.default_provider_policy == "fallback_allowed",
-        retry_manager=RetryManager(RetryPolicy(max_retries=1)),
+        retry_manager=RetryManager(
+            RetryPolicy(max_retries=3, base_delay_seconds=2.0, multiplier=2.5)
+        ),
     )
     return ContentGenerator(router)

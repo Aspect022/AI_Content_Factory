@@ -9,6 +9,7 @@ from typing import Generic, TypeVar
 from app.exceptions import (
     ErrorInfo,
     ProviderError,
+    ProviderTemporaryFailure,
     ProviderUnavailableError,
     RetryExhaustedError,
 )
@@ -111,10 +112,35 @@ class ProviderRouter(Generic[ProviderType]):
                 last_provider_error = error.__cause__
                 if not isinstance(last_provider_error, ProviderError):
                     raise
-                contextual_error = _with_provider_context(
-                    provider.name, last_provider_error
+                orig_msg = last_provider_error.error.message
+                temp_error = ProviderTemporaryFailure.from_message(
+                    code="provider_temporary_failure",
+                    message=(
+                        f"The provider failed transiently and retries were "
+                        f"exhausted. Original error: {orig_msg}"
+                    ),
+                    retriable=False,
+                    failure_step="text_generation",
                 )
+                contextual_error = _with_provider_context(provider.name, temp_error)
                 last_error = contextual_error
+
+                # Log intermediate provider failures so they are visible in run logs
+                import json
+                import sys
+
+                sys.stderr.write(
+                    json.dumps(
+                        {
+                            "event": "provider_attempt_failed",
+                            "provider": provider.name,
+                            "error": contextual_error.error.to_dict(),
+                        }
+                    )
+                    + "\n"
+                )
+                sys.stderr.flush()
+
                 if not self._fallback_allowed or index == len(available) - 1:
                     raise contextual_error from error
             else:
