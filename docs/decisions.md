@@ -103,3 +103,19 @@ The owner explicitly replaced the earlier Groq Qwen3-32B text-model choice with
 Groq's free-tier `llama-3.1-8b-instant`. The provider order remains Groq, then
 NVIDIA NIM, then Gemini; OpenRouter remains video-only. The Groq adapter uses
 JSON Object Mode and local schema validation, which this model supports.
+
+## Video provider priority override and API lifecycle
+
+The owner explicitly replaced the earlier Version 1 video order with Gemini
+Omni Flash (`gemini-omni-flash-preview`), then OpenRouter Video, then Google
+Veo 3.1. This order is represented only by `VIDEO_PROVIDER_PROFILES_JSON`; the
+orchestrator has no provider or model references.
+
+Gemini Omni uses the official Gemini Interactions API, which returns MP4 bytes
+in the interaction response. OpenRouter uses only its documented asynchronous
+`/api/v1/videos` API (create, poll, download), never chat completions. Veo
+continues to use the official Gemini long-running generation operation. The
+video factory retries only transient HTTP statuses 429, 500, 502, 503, and 504
+with exponential backoff; 401, 403, and 404 fail forward without retry. Video
+provider diagnostics record safe endpoint, status, response body, duration,
+poll state, job ID, and a query-stripped download URL.
