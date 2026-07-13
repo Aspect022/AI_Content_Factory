@@ -78,15 +78,14 @@ def post_json(
 def _standard_transport(
     url: str, headers: Mapping[str, str], payload: dict[str, object]
 ) -> HttpResponse:
-    user_agent = "curl/8.5.0"
+    req_headers = {"Content-Type": "application/json", **headers}
+    if "generativelanguage.googleapis.com" not in url:
+        req_headers["User-Agent"] = "curl/8.5.0"
+
     request = Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "User-Agent": user_agent,
-            **headers,
-        },
+        headers=req_headers,
         method="POST",
     )
     try:
