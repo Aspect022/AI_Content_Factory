@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from io import BytesIO
 from unittest.mock import patch
-from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -52,8 +50,8 @@ GEMINI_RESPONSE = {
             GeminiTextProvider("gemini-key"),
             GEMINI_RESPONSE,
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            "gemini-3.5-flash:generateContent",
-            "gemini-3.5-flash",
+            "gemini-1.5-flash:generateContent",
+            "gemini-1.5-flash",
         ),
     ],
 )
@@ -169,30 +167,48 @@ def test_gemini_provider_rejects_a_malformed_completion() -> None:
 def test_standard_transport_handles_success_http_errors_and_network_errors() -> None:
     """The standard-library transport is covered without making a real request."""
 
+    import httpx
+
     class FakeResponse:
         """Minimal URL response context manager for this unit test."""
 
-        status = 200
+        def __init__(self, status_code, text):
+            self.status_code = status_code
+            self.text = text
+            self.request = httpx.Request("POST", "https://mock.example")
 
-        def __enter__(self) -> FakeResponse:
-            return self
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise httpx.HTTPStatusError(
+                    "error", request=self.request, response=self
+                )
 
-        def __exit__(self, *_args: object) -> None:
-            return None
-
-        def read(self) -> bytes:
-            return b'{"topic": "Sleep"}'
-
-    with patch("app.providers.http.urlopen", return_value=FakeResponse()):
+    with patch(
+        "app.providers.http._CLIENT.post",
+        return_value=FakeResponse(200, '{"topic": "Sleep"}'),
+    ):
         assert post_json("https://mock.example", {}, {}) == {"topic": "Sleep"}
 
-    http_error = HTTPError("https://mock.example", 429, "quota", None, BytesIO(b"{}"))
-    with patch("app.providers.http.urlopen", side_effect=http_error):
+    with patch("app.providers.http._CLIENT.post", return_value=FakeResponse(429, "{}")):
         with pytest.raises(QuotaExceededError):
             post_json("https://mock.example", {}, {})
 
-    with patch("app.providers.http.urlopen", side_effect=URLError("offline")):
+    with patch(
+        "app.providers.http._CLIENT.post",
+        side_effect=httpx.RequestError(
+            "offline", request=httpx.Request("POST", "https://mock.example")
+        ),
+    ):
         with pytest.raises(ProviderUnavailableError):
+            post_json("https://mock.example", {}, {})
+
+    with patch(
+        "app.providers.http._CLIENT.post",
+        side_effect=httpx.TimeoutException(
+            "timeout", request=httpx.Request("POST", "https://mock.example")
+        ),
+    ):
+        with pytest.raises(httpx.TimeoutException):
             post_json("https://mock.example", {}, {})
 
 

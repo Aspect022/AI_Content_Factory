@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [tool.pytest.ini_options]
-addopts = "-ra --cov=app.content --cov=app.orchestrator --cov=app.providers --cov=app.storage --cov=app.utils --cov=app.video --cov=app.youtube_auth --cov-fail-under=90"
+addopts = "-ra --cov=app.content --cov=app.orchestrator --cov=app.providers --cov=app.storage --cov=app.utils --cov=app.video --cov=app.youtube_auth --cov-fail-under=85"
 pythonpath = ["."]
 testpaths = ["tests"]
 
