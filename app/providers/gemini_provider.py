@@ -167,7 +167,7 @@ class GeminiTextProvider:
                 if isinstance(error, httpx.TimeoutException):
                     raise
                 else:
-                    raise error.__cause__  # type: ignore
+                    raise error.__cause__ from None  # type: ignore
             if isinstance(error, httpx.RequestError) or (
                 hasattr(error, "__cause__")
                 and isinstance(error.__cause__, httpx.RequestError)

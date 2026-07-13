@@ -47,7 +47,7 @@ class GroqTextProvider:
         if not self._transport and api_key:
             import httpx
 
-            # Use a pre-configured HTTPX client matching our timeout logic, passed to Groq SDK
+            # Use a pre-configured HTTPX client passed to Groq SDK
             http_client = httpx.Client(
                 timeout=httpx.Timeout(connect=10.0, read=180.0, write=30.0, pool=10.0),
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
@@ -171,7 +171,7 @@ class GroqTextProvider:
             sys.stderr.flush()
             import httpx
 
-            # Preserve original exception style logic, throwing an error that fallback handles
+            # Preserve original exception style logic
             raise httpx.TimeoutException("The read operation timed out") from error
         except APIConnectionError as error:
             raise ProviderUnavailableError.from_message(

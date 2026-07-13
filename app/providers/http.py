@@ -131,7 +131,8 @@ def _standard_transport(
         import sys
 
         sys.stderr.write(
-            f"Request to {url} completed in {duration:.2f}s (status {response.status_code})\n"
+            f"Request to {url} completed in {duration:.2f}s "
+            f"(status {response.status_code})\n"
         )
         sys.stderr.flush()
 
@@ -142,7 +143,8 @@ def _standard_transport(
         import sys
 
         sys.stderr.write(
-            f"Request to {url} failed in {duration:.2f}s (status {error.response.status_code})\n"
+            f"Request to {url} failed in {duration:.2f}s "
+            f"(status {error.response.status_code})\n"
         )
         sys.stderr.flush()
         print_diagnostics(url, req_headers, "POST", error)
