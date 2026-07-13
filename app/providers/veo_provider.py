@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 
 from app.exceptions import ProviderResponseError, ProviderUnavailableError
 from app.providers.base import ProviderHealth, VideoGenerationRequest, VideoJob
+from app.providers.video_diagnostics import log_http_failure, request_started
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,16 +78,37 @@ class VeoVideoProvider:
                 retriable=False,
                 failure_step="video_generation",
             )
+        payload: dict[str, object] = {
+            "instances": [{"prompt": request.prompt}],
+            "parameters": {
+                "aspectRatio": request.aspect_ratio,
+                "durationSeconds": str(request.duration_seconds),
+            },
+        }
+        if request.source_image_path is not None:
+            import base64
+            import mimetypes
+
+            mime_type = (
+                mimetypes.guess_type(request.source_image_path.name)[0] or "image/png"
+            )
+            payload["instances"] = [
+                {
+                    "prompt": request.prompt,
+                    "image": {
+                        "inlineData": {
+                            "mimeType": mime_type,
+                            "data": base64.b64encode(
+                                request.source_image_path.read_bytes()
+                            ).decode("ascii"),
+                        }
+                    },
+                }
+            ]
         response = self._request_json(
             "POST",
             f"/models/{self.model}:predictLongRunning",
-            {
-                "instances": [{"prompt": request.prompt}],
-                "parameters": {
-                    "aspectRatio": request.aspect_ratio,
-                    "durationSeconds": str(request.duration_seconds),
-                },
-            },
+            payload,
         )
         name = response.get("name")
         if not isinstance(name, str) or not name:
@@ -135,8 +157,18 @@ class VeoVideoProvider:
                 retriable=True,
                 failure_step="video_download",
             )
+        started_at = request_started()
         response = self._transport("GET", uri, self._headers(), None)
-        _require_success(response)
+        _require_success(
+            response,
+            provider=self.name,
+            model=self.model,
+            endpoint=uri,
+            started_at=started_at,
+            job_id=job_id,
+            download_url=uri,
+            failure_step="video_download",
+        )
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_bytes(response.body)
         return target_path
@@ -145,10 +177,20 @@ class VeoVideoProvider:
         self, method: str, path: str, payload: dict[str, object] | None
     ) -> dict[str, object]:
         body = None if payload is None else json.dumps(payload).encode("utf-8")
+        started_at = request_started()
         response = self._transport(
             method, f"{self._base_url}{path}", self._headers(), body
         )
-        _require_success(response)
+        _require_success(
+            response,
+            provider=self.name,
+            model=self.model,
+            endpoint=f"{self._base_url}{path}",
+            started_at=started_at,
+            job_id=None,
+            download_url=None,
+            failure_step="video_generation",
+        )
         try:
             decoded = json.loads(response.body)
         except json.JSONDecodeError as error:
@@ -191,18 +233,40 @@ def _standard_transport(
         ) from error
 
 
-def _require_success(response: VideoHttpResponse) -> None:
-    if response.status_code >= 500:
-        raise ProviderUnavailableError.from_message(
-            code="video_provider_server_error",
-            message="Veo returned a transient server error.",
-            retriable=True,
-            failure_step="video_generation",
-        )
+def _require_success(
+    response: VideoHttpResponse,
+    *,
+    provider: str,
+    model: str,
+    endpoint: str,
+    started_at: float,
+    job_id: str | None,
+    download_url: str | None,
+    failure_step: str,
+) -> None:
     if response.status_code >= 400:
+        transient = response.status_code in {429, 500, 502, 503, 504}
+        log_http_failure(
+            provider=provider,
+            model=model,
+            endpoint=endpoint,
+            status_code=response.status_code,
+            response_body=response.body,
+            started_at=started_at,
+            job_id=job_id,
+            download_url=download_url,
+        )
         raise ProviderUnavailableError.from_message(
-            code="video_provider_request_failed",
-            message="Veo rejected the video generation request.",
-            retriable=False,
-            failure_step="video_generation",
+            code=(
+                "video_provider_server_error"
+                if transient
+                else "video_provider_request_failed"
+            ),
+            message=(
+                "Veo returned a transient server error."
+                if transient
+                else "Veo rejected the video generation request."
+            ),
+            retriable=transient,
+            failure_step=failure_step,
         )

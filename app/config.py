@@ -186,7 +186,7 @@ def _optional_value(values: Mapping[str, str], name: str) -> str | None:
 
 
 def _video_duration(values: Mapping[str, str]) -> int:
-    """Load the single-clip Version 1 duration supported by Veo."""
+    """Load the single-clip Version 1 duration selected for provider profiles."""
 
     raw_value = values.get("VIDEO_DURATION_SECONDS", "8").strip()
     try:

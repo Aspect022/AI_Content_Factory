@@ -56,11 +56,16 @@ class TextProvider(Provider, Protocol):
 
 @dataclass(frozen=True, slots=True)
 class VideoGenerationRequest:
-    """Provider-neutral input for a future video generation job."""
+    """Provider-neutral input for one generated video artifact.
+
+    ``source_image_path`` is optional so a future caller can request image-to-
+    video without changing the orchestrator-facing video service contract.
+    """
 
     prompt: str
     aspect_ratio: str = "9:16"
     duration_seconds: int = 8
+    source_image_path: Path | None = None
 
 
 @dataclass(frozen=True, slots=True)
