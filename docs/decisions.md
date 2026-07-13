@@ -119,3 +119,14 @@ video factory retries only transient HTTP statuses 429, 500, 502, 503, and 504
 with exponential backoff; 401, 403, and 404 fail forward without retry. Video
 provider diagnostics record safe endpoint, status, response body, duration,
 poll state, job ID, and a query-stripped download URL.
+
+## Video quota and duration compatibility
+
+Gemini Omni API responses that explicitly report zero quota are classified as
+non-retriable capacity failures and immediately permit routing to the next video
+provider. This avoids wasting retries when a Gemini API project has no paid-tier
+Omni entitlement. OpenRouter's configured Wan 2.6 profile defaults to its
+accepted 10-second duration rather than the pipeline's general 8-second
+preference; an optional profile `duration_seconds` field is available for other
+OpenRouter video models. Veo requests use a numeric `durationSeconds` value as
+required by the Gemini API.

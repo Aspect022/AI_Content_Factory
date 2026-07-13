@@ -48,7 +48,7 @@ def test_veo_provider_runs_a_single_eight_second_job_lifecycle(tmp_path: Path) -
     destination = provider.download_result(job.job_id, tmp_path / "video.mp4")
 
     payload = json.loads(requests[0][2] or b"{}")
-    assert payload["parameters"] == {"aspectRatio": "9:16", "durationSeconds": "8"}
+    assert payload["parameters"] == {"aspectRatio": "9:16", "durationSeconds": 8}
     assert destination.read_bytes() == b"video-bytes"
 
 

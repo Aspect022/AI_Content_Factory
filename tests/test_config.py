@@ -25,6 +25,7 @@ def test_load_config_returns_redacted_safe_summary(
         "google_veo",
     ]
     assert configuration.video_provider_profiles[1].model == "alibaba/wan-2.6:free"
+    assert configuration.video_provider_profiles[1].duration_seconds is None
     assert "test-groq-key" not in str(configuration.redacted_summary())
     assert configuration.redacted_summary()["qwen_configured"] is False
 

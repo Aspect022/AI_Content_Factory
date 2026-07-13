@@ -37,6 +37,7 @@ class VideoProviderProfile:
     model: str
     api_key: str = field(repr=False)
     priority: int
+    duration_seconds: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,6 +257,11 @@ def _video_provider_profiles(
             raise _invalid_video_profile()
         if name in names:
             raise _invalid_video_profile()
+        duration_seconds = raw_profile.get("duration_seconds")
+        if duration_seconds is not None and (
+            not isinstance(duration_seconds, int) or duration_seconds < 1
+        ):
+            raise _invalid_video_profile()
         api_key = values.get(api_key_env, "").strip()
         if not api_key:
             raise ConfigurationError(
@@ -277,6 +283,7 @@ def _video_provider_profiles(
                 model=model,
                 api_key=api_key,
                 priority=priority,
+                duration_seconds=duration_seconds,
             )
         )
     return tuple(profiles)
@@ -290,7 +297,7 @@ def _invalid_video_profile() -> ConfigurationError:
             code="invalid_video_provider_profiles",
             message=(
                 "Each video provider profile needs unique name, provider, model, "
-                "and api_key_env strings."
+                "and api_key_env strings; duration_seconds is optional and positive."
             ),
             retriable=False,
             failure_step="configuration",

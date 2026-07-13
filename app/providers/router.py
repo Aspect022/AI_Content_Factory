@@ -120,7 +120,7 @@ class ProviderRouter(Generic[ProviderType]):
                         f"exhausted. Original error: {orig_msg}"
                     ),
                     retriable=False,
-                    failure_step="text_generation",
+                    failure_step=last_provider_error.error.failure_step,
                 )
                 contextual_error = _with_provider_context(provider.name, temp_error)
                 last_error = contextual_error

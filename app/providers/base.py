@@ -75,6 +75,7 @@ class VideoJob:
     job_id: str
     status: str
     model: str
+    duration_seconds: int | None = None
 
 
 class VideoProvider(Provider, Protocol):

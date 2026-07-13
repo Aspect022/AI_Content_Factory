@@ -80,7 +80,7 @@ class VideoGenerationService:
                 model=job.model,
                 job_id=job.job_id,
                 local_path=local_path,
-                duration_seconds=request.duration_seconds,
+                duration_seconds=job.duration_seconds or request.duration_seconds,
                 metadata={
                     "aspect_ratio": request.aspect_ratio,
                     "source_image": request.source_image_path is not None,

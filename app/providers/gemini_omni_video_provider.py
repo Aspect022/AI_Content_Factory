@@ -98,7 +98,12 @@ class GeminiOmniVideoProvider:
                 retriable=True,
                 failure_step="video_generation",
             ) from error
-        return VideoJob(job_id=job_id, status="completed", model=self.model)
+        return VideoJob(
+            job_id=job_id,
+            status="completed",
+            model=self.model,
+            duration_seconds=request.duration_seconds,
+        )
 
     def poll_job(self, job_id: str) -> VideoJob:
         """Return the completed interaction retained by the synchronous API call."""
@@ -199,6 +204,10 @@ def _require_success(
     started_at: float,
 ) -> None:
     if response.status_code >= 400:
+        body_text = response.body.decode("utf-8", errors="replace").lower()
+        quota_exhausted = response.status_code == 429 and (
+            "quota exceeded" in body_text or "limit: 0" in body_text
+        )
         log_http_failure(
             provider=provider,
             model=model,
@@ -209,15 +218,26 @@ def _require_success(
         )
         raise ProviderUnavailableError.from_message(
             code=(
-                "gemini_omni_video_transient_failure"
-                if response.status_code in {429, 500, 502, 503, 504}
-                else "gemini_omni_video_request_failed"
+                "gemini_omni_video_quota_exhausted"
+                if quota_exhausted
+                else (
+                    "gemini_omni_video_transient_failure"
+                    if response.status_code in {429, 500, 502, 503, 504}
+                    else "gemini_omni_video_request_failed"
+                )
             ),
             message=(
-                "Gemini Omni video generation is temporarily unavailable."
-                if response.status_code in {429, 500, 502, 503, 504}
-                else "Gemini Omni rejected the video request."
+                "Gemini Omni has no API quota for this project."
+                if quota_exhausted
+                else (
+                    "Gemini Omni video generation is temporarily unavailable."
+                    if response.status_code in {429, 500, 502, 503, 504}
+                    else "Gemini Omni rejected the video request."
+                )
             ),
-            retriable=response.status_code in {429, 500, 502, 503, 504},
+            retriable=(
+                not quota_exhausted
+                and response.status_code in {429, 500, 502, 503, 504}
+            ),
             failure_step="video_generation",
         )

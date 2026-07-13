@@ -38,6 +38,7 @@ def _build_video_provider(profile: VideoProviderProfile) -> object:
             name=profile.name,
             priority=profile.priority,
             model=profile.model,
+            duration_seconds=profile.duration_seconds or 10,
         )
     if profile.provider in {"google_flow", "google_veo"}:
         return VeoVideoProvider(

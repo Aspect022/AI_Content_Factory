@@ -125,13 +125,18 @@ and then eligible for provider fallback.
 ## Version 1 video generation
 
 Version 1 generates one high-quality portrait (`9:16`) clip per day and defaults
-to `8` seconds. `GeminiOmniVideoProvider` calls Gemini's official Interactions
+to `8` seconds where the selected provider supports it. `GeminiOmniVideoProvider` calls Gemini's official Interactions
 API and saves its returned MP4. `OpenRouterVideoProvider` uses OpenRouter's
 dedicated asynchronous video API: submit, poll, then download. `VeoVideoProvider`
 uses Google's long-running Gemini API operation only as the third configured
 fallback. All three return the same local-MP4 `VideoResult`; this leaves the
 orchestrator unchanged when Version 2 later adds native longer videos or clip
 assembly.
+
+Wan 2.6 currently accepts 5- or 10-second jobs through OpenRouter, so its
+provider defaults to 10 seconds while preserving the global 8-second preference
+for providers that support it. Set optional `duration_seconds` in that video
+profile to change it when switching models.
 
 ## Video profiles and credentials
 

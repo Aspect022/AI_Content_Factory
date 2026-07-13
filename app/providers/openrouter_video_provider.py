@@ -29,6 +29,7 @@ class OpenRouterVideoProvider:
         name: str,
         priority: int,
         model: str,
+        duration_seconds: int = 10,
         transport: VideoTransport | None = None,
     ) -> None:
         """Create a model-configured provider with an injectable HTTP transport."""
@@ -37,6 +38,7 @@ class OpenRouterVideoProvider:
         self.name = name
         self.priority = priority
         self.model = model
+        self._duration_seconds = duration_seconds
         self._transport = transport or _standard_transport
         self._jobs: dict[str, dict[str, object]] = {}
 
@@ -76,7 +78,7 @@ class OpenRouterVideoProvider:
             "model": self.model,
             "prompt": request.prompt,
             "aspect_ratio": request.aspect_ratio,
-            "duration": request.duration_seconds,
+            "duration": self._duration_seconds,
             "resolution": "720p",
             "generate_audio": True,
         }
@@ -111,7 +113,12 @@ class OpenRouterVideoProvider:
         if not isinstance(polling_url, str) or not polling_url:
             polling_url = f"{self._base_url}/{job_id}"
         self._jobs[job_id] = {"polling_url": self._absolute_url(polling_url)}
-        return VideoJob(job_id=job_id, status=status, model=self.model)
+        return VideoJob(
+            job_id=job_id,
+            status=status,
+            model=self.model,
+            duration_seconds=self._duration_seconds,
+        )
 
     def poll_job(self, job_id: str) -> VideoJob:
         """Poll the documented OpenRouter job endpoint until a terminal state."""
@@ -138,7 +145,12 @@ class OpenRouterVideoProvider:
         urls = response.get("unsigned_urls")
         if isinstance(urls, list) and urls and isinstance(urls[0], str):
             self._jobs[job_id]["download_url"] = urls[0]
-        return VideoJob(job_id=job_id, status=status, model=self.model)
+        return VideoJob(
+            job_id=job_id,
+            status=status,
+            model=self.model,
+            duration_seconds=self._duration_seconds,
+        )
 
     def download_result(self, job_id: str, target_path: Path) -> Path:
         """Download the first completed MP4 to the supplied runner-local path."""

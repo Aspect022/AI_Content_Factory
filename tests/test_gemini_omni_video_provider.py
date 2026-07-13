@@ -157,3 +157,23 @@ def test_gemini_omni_marks_only_transient_http_failures_retriable(
         provider.create_job(VideoGenerationRequest("prompt"))
 
     assert error.value.error.retriable is True
+
+
+def test_gemini_omni_limit_zero_fails_over_without_retries() -> None:
+    """A no-quota entitlement response must immediately permit router fallback."""
+
+    provider = GeminiOmniVideoProvider(
+        "key",
+        name="gemini_omni",
+        priority=1,
+        model="configured",
+        transport=lambda *_args: VideoHttpResponse(
+            429, b'{"error":{"message":"Quota exceeded: limit: 0"}}'
+        ),
+    )
+
+    with pytest.raises(ProviderUnavailableError) as error:
+        provider.create_job(VideoGenerationRequest("prompt"))
+
+    assert error.value.error.code == "gemini_omni_video_quota_exhausted"
+    assert error.value.error.retriable is False

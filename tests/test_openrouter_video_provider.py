@@ -51,9 +51,40 @@ def test_openrouter_video_provider_uses_configured_model_and_downloads_mp4(
         VideoGenerationRequest("video prompt"), tmp_path / "run.mp4"
     )
 
-    assert json.loads(calls[0][2] or b"{}")["model"] == "configured/model"
+    request_payload = json.loads(calls[0][2] or b"{}")
+    assert request_payload["model"] == "configured/model"
+    assert request_payload["duration"] == 10
     assert result.local_path.read_bytes() == b"mp4-bytes"
     assert result.provider == "openrouter"
+    assert result.duration_seconds == 10
+
+
+def test_openrouter_video_provider_allows_a_profile_duration_override() -> None:
+    """Future models can select their own supported duration through config."""
+
+    payloads: list[dict[str, object]] = []
+
+    def transport(
+        _method: str,
+        _url: str,
+        _headers: Mapping[str, str],
+        body: bytes | None,
+    ) -> VideoHttpResponse:
+        payloads.append(json.loads(body or b"{}"))
+        return VideoHttpResponse(202, b'{"id":"job-1","status":"pending"}')
+
+    provider = OpenRouterVideoProvider(
+        "key",
+        name="openrouter",
+        priority=2,
+        model="configured/model",
+        duration_seconds=5,
+        transport=transport,
+    )
+
+    provider.create_job(VideoGenerationRequest("prompt"))
+
+    assert payloads[0]["duration"] == 5
 
 
 def test_openrouter_video_provider_surfaces_failed_jobs() -> None:

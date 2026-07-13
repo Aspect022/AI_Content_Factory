@@ -82,7 +82,7 @@ class VeoVideoProvider:
             "instances": [{"prompt": request.prompt}],
             "parameters": {
                 "aspectRatio": request.aspect_ratio,
-                "durationSeconds": str(request.duration_seconds),
+                "durationSeconds": request.duration_seconds,
             },
         }
         if request.source_image_path is not None:
@@ -118,7 +118,12 @@ class VeoVideoProvider:
                 retriable=True,
                 failure_step="video_generation",
             )
-        return VideoJob(job_id=name, status="submitted", model=self.model)
+        return VideoJob(
+            job_id=name,
+            status="submitted",
+            model=self.model,
+            duration_seconds=request.duration_seconds,
+        )
 
     def poll_job(self, job_id: str) -> VideoJob:
         """Fetch the current documented long-running operation state."""
