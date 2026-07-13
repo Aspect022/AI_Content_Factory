@@ -11,15 +11,15 @@ from app.providers.base import (
     TextGenerationRequest,
     TextGenerationResponse,
 )
-from app.providers.http import HttpTransport, post_json
+from app.providers.http import HttpTransport, clean_and_parse_json, post_json
 
 
 class GroqTextProvider:
-    """Generate schema-bound text through Groq's free-tier Llama 3.1 8B model."""
+    """Generate schema-bound text through Groq's free-tier Llama 3.3 70B model."""
 
-    name = "groq_llama_3_1_8b"
+    name = "groq_llama_3_3_70b"
     priority = 1
-    model = "llama-3.1-8b-instant"
+    model = "llama-3.3-70b-versatile"
     _endpoint = "https://api.groq.com/openai/v1/chat/completions"
 
     def __init__(self, api_key: str, *, transport: HttpTransport | None = None) -> None:
@@ -71,19 +71,12 @@ def _openai_content(response: dict[str, object]) -> dict[str, object]:
         choices = response["choices"]
         message = choices[0]["message"]  # type: ignore[index]
         content = message["content"]  # type: ignore[index]
-        parsed = json.loads(content)
-    except (IndexError, KeyError, TypeError, json.JSONDecodeError) as error:
+        parsed = clean_and_parse_json(content)
+    except (IndexError, KeyError, TypeError, json.JSONDecodeError, ValueError) as error:
         raise ProviderResponseError.from_message(
             code="invalid_provider_response",
             message="The provider response did not contain a JSON completion.",
             retriable=True,
             failure_step="text_generation",
         ) from error
-    if not isinstance(parsed, dict):
-        raise ProviderResponseError.from_message(
-            code="invalid_provider_response",
-            message="The provider completion must be a JSON object.",
-            retriable=True,
-            failure_step="text_generation",
-        )
     return parsed
