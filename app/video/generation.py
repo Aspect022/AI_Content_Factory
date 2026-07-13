@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic
-from typing import Any
 
 from app.exceptions import ProviderUnavailableError
 from app.providers.base import VideoGenerationRequest, VideoProvider
@@ -23,13 +22,6 @@ class VideoResult:
     local_path: Path
     duration_seconds: int
     generation_seconds: float = 0.0
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-    @property
-    def local_mp4_path(self) -> Path:
-        """Return the standardized runner-local MP4 path."""
-
-        return self.local_path
 
 
 class VideoGenerationService:
@@ -81,10 +73,6 @@ class VideoGenerationService:
                 job_id=job.job_id,
                 local_path=local_path,
                 duration_seconds=request.duration_seconds,
-                metadata={
-                    "aspect_ratio": request.aspect_ratio,
-                    "source_image": request.source_image_path is not None,
-                },
             )
 
         result = self._router.execute(operation).value
@@ -95,5 +83,4 @@ class VideoGenerationService:
             local_path=result.local_path,
             duration_seconds=result.duration_seconds,
             generation_seconds=monotonic() - started_at,
-            metadata=result.metadata,
         )

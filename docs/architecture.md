@@ -45,16 +45,9 @@ flowchart TD
   provider chain; adapters use injected HTTP transports in tests.
 - `app.utils.retry` owns retry classification and configurable exponential
   backoff; `app.utils.jsonschema` validates provider output contracts.
-- `app.providers.gemini_omni_video_provider` owns the official Gemini
-  Interactions API call, including its returned base64 MP4 and optional local
-  image-to-video input. It adapts that synchronous interaction to the standard
-  video-job contract.
-- `app.providers.openrouter_video_provider` owns only OpenRouter's documented
-  asynchronous Video API: create job, poll to completion, and download MP4.
-- `app.providers.veo_provider` owns the official Google long-running Veo
-  operation as a configuration-selected fallback. Every video adapter returns a
-  runner-local MP4 through `VideoGenerationService` without vendor knowledge in
-  `app.orchestrator`.
+- `app.providers.veo_provider` owns a single Gemini/Flow long-running job:
+  create, poll, and download. Its duration-aware request preserves a Version 2
+  multi-clip or longer-native extension point without changing orchestration.
 - `app.video.factory` builds ordered video providers from JSON environment
   profiles. `app.orchestrator` receives only `VideoGenerationService`,
   `UploadProvider`, and `NotificationProvider` interfaces; it has no vendor

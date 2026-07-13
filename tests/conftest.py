@@ -18,12 +18,12 @@ def required_environment() -> dict[str, str]:
         "OPENROUTER_API_KEY": "test-openrouter-key",
         "OPENROUTER_FALLBACK_API_KEY": "test-openrouter-fallback-key",
         "VIDEO_PROVIDER_PROFILES_JSON": (
-            '[{"name":"gemini_omni","provider":"gemini_omni",'
-            '"model":"gemini-omni-flash-preview","api_key_env":"GEMINI_API_KEY"},'
-            '{"name":"openrouter_video","provider":"openrouter",'
+            '[{"name":"flow_quality","provider":"google_flow",'
+            '"model":"veo-quality","api_key_env":"GEMINI_API_KEY"},'
+            '{"name":"openrouter","provider":"openrouter",'
             '"model":"alibaba/wan-2.6:free","api_key_env":"OPENROUTER_API_KEY"},'
-            '{"name":"google_veo","provider":"google_veo",'
-            '"model":"veo-3.1-generate-preview","api_key_env":"GEMINI_FALLBACK_API_KEY"}]'
+            '{"name":"flow_fallback","provider":"google_flow",'
+            '"model":"veo-lite","api_key_env":"GEMINI_FALLBACK_API_KEY"}]'
         ),
         "YOUTUBE_CLIENT_SECRET_JSON": '{"installed": {}}',
         "YOUTUBE_REFRESH_TOKEN": "test-refresh-token",

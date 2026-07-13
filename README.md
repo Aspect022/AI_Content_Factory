@@ -18,8 +18,8 @@ This repository implements the production Version 1 pipeline:
   dependency-free JSON-schema validation;
 - versioned Hindi topic/script prompts, strict output contracts, and routed text
   generation through the specified provider order;
-- configuration-driven single-clip video generation with Gemini Omni Flash,
-  OpenRouter Video, and Google Veo profiles;
+- configuration-driven single-clip video generation with Google Flow and
+  OpenRouter video profiles;
 - official YouTube Data API upload with resumable MP4 transfer and confirmed
   video URLs;
 - Telegram success and failure notifications;
@@ -92,14 +92,12 @@ ID. Telegram messages include status, selected provider, generation time, and UR
 
 ## Provider policy
 
-The engineering specification controls the baseline architecture. The owner has
-explicitly superseded its earlier Version 1 video ordering with this current,
-configuration-driven priority:
+The Engineering Specification controls provider ordering:
 
 1. Text: Groq Llama 3.1 8B Instant, then NVIDIA NIM DeepSeek-R1, then Gemini
    2.5 Flash.
-2. Video: Gemini Omni Flash, then OpenRouter Video, then Google Veo 3.1.
-   Models and credentials remain entirely in `VIDEO_PROVIDER_PROFILES_JSON`.
+2. Video profiles: Google Flow Quality, OpenRouter Video, then Google Flow
+   Fast/Lite, configured entirely through `VIDEO_PROVIDER_PROFILES_JSON`.
 
 See [the architecture notes](docs/architecture.md) and
 [recorded specification decisions](docs/decisions.md).
@@ -124,33 +122,21 @@ and then eligible for provider fallback.
 
 ## Version 1 video generation
 
-Version 1 generates one high-quality portrait (`9:16`) clip per day and defaults
-to `8` seconds. `GeminiOmniVideoProvider` calls Gemini's official Interactions
-API and saves its returned MP4. `OpenRouterVideoProvider` uses OpenRouter's
-dedicated asynchronous video API: submit, poll, then download. `VeoVideoProvider`
-uses Google's long-running Gemini API operation only as the third configured
-fallback. All three return the same local-MP4 `VideoResult`; this leaves the
-orchestrator unchanged when Version 2 later adds native longer videos or clip
-assembly.
+Version 1 generates one high-quality portrait (`9:16`) clip per day. Its default
+duration is `8` seconds and may only be configured to Veo-supported 4, 6, or
+8-second lengths through `VIDEO_DURATION_SECONDS`. `VeoVideoProvider` creates,
+polls, and downloads a single Veo 3.1 Fast operation through the Gemini API.
+The duration-aware request contract allows Version 2 to add longer native
+providers or multi-clip composition without changing an orchestrator caller.
 
 ## Video profiles and credentials
 
 `VIDEO_PROVIDER_PROFILES_JSON` defines provider order, provider type, model, and
-the environment variable that supplies each profile's key. The committed example
-is:
-
-```json
-[
-  {"name":"gemini_omni","provider":"gemini_omni","model":"gemini-omni-flash-preview","api_key_env":"GEMINI_API_KEY"},
-  {"name":"openrouter_video","provider":"openrouter","model":"alibaba/wan-2.6:free","api_key_env":"OPENROUTER_API_KEY"},
-  {"name":"google_veo","provider":"google_veo","model":"veo-3.1-generate-preview","api_key_env":"GEMINI_FALLBACK_API_KEY"}
-]
-```
-
-Set that JSON as the GitHub `VIDEO_PROVIDER_PROFILES_JSON` secret before the next
-workflow dispatch. The OpenRouter model is configuration-only; check its video
-model availability with OpenRouter before changing the model string. Separate
-main/fallback keys are retained for Gemini and OpenRouter. OpenRouter is
+the environment variable that supplies each profile's key. This allows multiple
+Google Flow profiles without embedding credentials or model names in the
+orchestrator. Configure separate `GEMINI_API_KEY` and `GEMINI_FALLBACK_API_KEY`
+values for the main and fallback Flow profiles, plus separate
+`OPENROUTER_API_KEY` and `OPENROUTER_FALLBACK_API_KEY` values. OpenRouter is
 registered only by the video factory and is never part of text generation.
 
 ## Remaining manual setup
