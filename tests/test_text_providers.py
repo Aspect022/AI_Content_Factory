@@ -20,7 +20,7 @@ from app.exceptions import (
 from app.providers.base import TextGenerationRequest
 from app.providers.gemini_provider import GeminiTextProvider
 from app.providers.groq_provider import GroqTextProvider
-from app.providers.http import HttpResponse, post_json
+from app.providers.http import HttpResponse, clean_and_parse_json, post_json
 from app.providers.nvidia_provider import NvidiaNimTextProvider
 
 REQUEST = TextGenerationRequest(
@@ -40,7 +40,7 @@ GEMINI_RESPONSE = {
             GroqTextProvider("groq-key"),
             OPENAI_RESPONSE,
             "https://api.groq.com/openai/v1/chat/completions",
-            "llama-3.1-8b-instant",
+            "llama-3.3-70b-versatile",
         ),
         (
             NvidiaNimTextProvider("nvidia-key"),
@@ -194,3 +194,40 @@ def test_standard_transport_handles_success_http_errors_and_network_errors() -> 
     with patch("app.providers.http.urlopen", side_effect=URLError("offline")):
         with pytest.raises(ProviderUnavailableError):
             post_json("https://mock.example", {}, {})
+
+
+def test_clean_and_parse_json_handles_thinking_and_markdown_wrappers() -> None:
+    """clean_and_parse_json successfully extracts JSON from various wrappers."""
+
+    # 1. Standard JSON
+    assert clean_and_parse_json('{"foo": "bar"}') == {"foo": "bar"}
+
+    # 2. Wrapped in think tags (DeepSeek-R1 style)
+    think_wrapped = '<think>Some reasoning</think>{\n  "foo": "bar"\n}'
+    assert clean_and_parse_json(think_wrapped) == {"foo": "bar"}
+
+    # 3. Wrapped in markdown codeblock
+    markdown_wrapped = '```json\n{\n  "foo": "bar"\n}\n```'
+    assert clean_and_parse_json(markdown_wrapped) == {"foo": "bar"}
+
+    # 4. Multi-line think tags + code blocks + extra text
+    combined = (
+        "Here is the thinking:\n"
+        "<think>\nNeed to return a valid object.\n</think>\n"
+        "Here is the requested JSON response:\n"
+        "```json\n"
+        "{\n"
+        '  "foo": "bar"\n'
+        "}\n"
+        "```\n"
+        "Hope this helps!"
+    )
+    assert clean_and_parse_json(combined) == {"foo": "bar"}
+
+    # 5. Non-dict JSON raises ValueError
+    with pytest.raises(ValueError, match="Parsed JSON must be a dictionary object."):
+        clean_and_parse_json("[1, 2, 3]")
+
+    # 6. Invalid JSON raises json.JSONDecodeError
+    with pytest.raises(json.JSONDecodeError):
+        clean_and_parse_json("not-json")

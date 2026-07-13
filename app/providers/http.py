@@ -137,3 +137,27 @@ def _is_credential_rejection(body: str) -> bool:
         return False
     normalized = message.lower()
     return "api key" in normalized or "credential" in normalized
+
+
+def clean_and_parse_json(content: str) -> dict[str, object]:
+    """Extract and parse the JSON object, removing thinking blocks."""
+
+    import re
+
+    # Remove any reasoning/thinking blocks
+    cleaned = re.sub(r"(?s)<think>.*?</think>", "", content)
+    if "<think>" in cleaned:
+        cleaned = cleaned.split("<think>", 1)[0]
+
+    # Find the first { and last }
+    start_idx = cleaned.find("{")
+    end_idx = cleaned.rfind("}")
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        json_str = cleaned[start_idx : end_idx + 1]
+    else:
+        json_str = cleaned
+
+    parsed = json.loads(json_str)
+    if not isinstance(parsed, dict):
+        raise ValueError("Parsed JSON must be a dictionary object.")
+    return parsed

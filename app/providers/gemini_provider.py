@@ -11,7 +11,7 @@ from app.providers.base import (
     TextGenerationRequest,
     TextGenerationResponse,
 )
-from app.providers.http import HttpTransport, post_json
+from app.providers.http import HttpTransport, clean_and_parse_json, post_json
 
 
 class GeminiTextProvider:
@@ -76,19 +76,12 @@ def _gemini_content(response: dict[str, object]) -> dict[str, object]:
         content = candidates[0]["content"]  # type: ignore[index]
         parts = content["parts"]  # type: ignore[index]
         text = parts[0]["text"]  # type: ignore[index]
-        parsed = json.loads(text)
-    except (IndexError, KeyError, TypeError, json.JSONDecodeError) as error:
+        parsed = clean_and_parse_json(text)
+    except (IndexError, KeyError, TypeError, json.JSONDecodeError, ValueError) as error:
         raise ProviderResponseError.from_message(
             code="invalid_provider_response",
             message="The provider response did not contain a JSON completion.",
             retriable=True,
             failure_step="text_generation",
         ) from error
-    if not isinstance(parsed, dict):
-        raise ProviderResponseError.from_message(
-            code="invalid_provider_response",
-            message="The provider completion must be a JSON object.",
-            retriable=True,
-            failure_step="text_generation",
-        )
     return parsed
