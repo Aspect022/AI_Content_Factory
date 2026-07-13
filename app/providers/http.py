@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+
+import httpx
 
 from app.exceptions import (
     ProviderAuthenticationError,
@@ -26,6 +26,11 @@ class HttpResponse:
 
 
 HttpTransport = Callable[[str, Mapping[str, str], dict[str, object]], HttpResponse]
+
+_CLIENT = httpx.Client(
+    timeout=httpx.Timeout(connect=10.0, read=180.0, write=30.0, pool=10.0),
+    limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+)
 
 
 def post_json(
@@ -81,7 +86,6 @@ def print_diagnostics(
     """Print complete Python traceback and underlying request details for debugging."""
     import sys
     import traceback
-    from urllib.error import HTTPError
 
     sys.stderr.write("=" * 80 + "\n")
     sys.stderr.write("COMPLETE PYTHON TRACEBACK:\n")
@@ -100,9 +104,9 @@ def print_diagnostics(
             redacted_headers[k] = v
     sys.stderr.write(f"REQUEST HEADERS: {redacted_headers}\n")
 
-    if isinstance(error, HTTPError):
+    if isinstance(error, httpx.HTTPStatusError):
         try:
-            body = error.read().decode("utf-8", errors="replace")
+            body = error.response.text
             sys.stderr.write(f"RESPONSE BODY: {body}\n")
         except Exception:
             pass
@@ -117,19 +121,49 @@ def _standard_transport(
     if "generativelanguage.googleapis.com" not in url:
         req_headers["User-Agent"] = "curl/8.5.0"
 
-    request = Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=req_headers,
-        method="POST",
-    )
+    import time
+
+    start_time = time.monotonic()
+
     try:
-        with urlopen(request, timeout=60) as response:  # noqa: S310
-            return HttpResponse(response.status, response.read().decode("utf-8"))
-    except HTTPError as error:
+        response = _CLIENT.post(url, headers=req_headers, json=payload)
+        duration = time.monotonic() - start_time
+        import sys
+
+        sys.stderr.write(
+            f"Request to {url} completed in {duration:.2f}s (status {response.status_code})\n"
+        )
+        sys.stderr.flush()
+
+        response.raise_for_status()
+        return HttpResponse(response.status_code, response.text)
+    except httpx.HTTPStatusError as error:
+        duration = time.monotonic() - start_time
+        import sys
+
+        sys.stderr.write(
+            f"Request to {url} failed in {duration:.2f}s (status {error.response.status_code})\n"
+        )
+        sys.stderr.flush()
         print_diagnostics(url, req_headers, "POST", error)
-        return HttpResponse(error.code, error.read().decode("utf-8", errors="replace"))
-    except (TimeoutError, URLError) as error:
+        return HttpResponse(error.response.status_code, error.response.text)
+    except httpx.TimeoutException as error:
+        duration = time.monotonic() - start_time
+        import sys
+
+        sys.stderr.write(f"Request to {url} timed out after {duration:.2f}s\n")
+        sys.stderr.flush()
+        print_diagnostics(url, req_headers, "POST", error)
+        # Preserve the original exception
+        raise
+    except httpx.RequestError as error:
+        duration = time.monotonic() - start_time
+        import sys
+
+        sys.stderr.write(
+            f"Request to {url} failed due to network error after {duration:.2f}s\n"
+        )
+        sys.stderr.flush()
         print_diagnostics(url, req_headers, "POST", error)
         raise ProviderUnavailableError.from_message(
             code="provider_network_error",
@@ -138,8 +172,15 @@ def _standard_transport(
             failure_step="text_generation",
         ) from error
     except Exception as error:
+        duration = time.monotonic() - start_time
+        import sys
+
+        sys.stderr.write(
+            f"Request to {url} failed with unexpected error after {duration:.2f}s\n"
+        )
+        sys.stderr.flush()
         print_diagnostics(url, req_headers, "POST", error)
-        raise error
+        raise
 
 
 def _raise_for_status(status_code: int, body: str = "") -> None:

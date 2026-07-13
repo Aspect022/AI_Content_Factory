@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 
 from app.providers.base import (
@@ -44,7 +45,11 @@ class NvidiaNimTextProvider:
             "messages": [
                 {
                     "role": "user",
-                    "content": f"{request.prompt}\nReturn only one JSON object.",
+                    "content": (
+                        f"{request.prompt}\n"
+                        f"Return only one JSON object matching this schema:\n"
+                        f"{json.dumps(request.schema)}"
+                    ),
                 }
             ],
             "stream": False,
