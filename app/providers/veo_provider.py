@@ -1,4 +1,10 @@
-"""Official Gemini API adapter for single-clip Veo 3.1 Fast generation."""
+"""Official Gemini API adapter for single-clip Veo 3.1 generation.
+
+Defaults to the Veo 3.1 Lite preview tier (``veo-3.1-lite-generate-preview``),
+Google's lowest-cost Veo 3.1 model. It is registered only as a fallback behind
+OpenRouter Video; see ``docs/decisions.md`` for why the higher-tier Veo models
+were dropped from the default profile.
+"""
 
 from __future__ import annotations
 
@@ -29,7 +35,7 @@ VideoTransport = Callable[
 
 
 class VeoVideoProvider:
-    """Generate one 4, 6, or 8-second portrait clip with Veo 3.1 Fast."""
+    """Generate one 4, 6, or 8-second portrait clip with a configured Veo 3.1 model."""
 
     _base_url = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -37,9 +43,9 @@ class VeoVideoProvider:
         self,
         api_key: str,
         *,
-        name: str = "google_flow",
-        priority: int = 1,
-        model: str = "veo-3.1-fast-generate-preview",
+        name: str = "google_veo",
+        priority: int = 2,
+        model: str = "veo-3.1-lite-generate-preview",
         transport: VideoTransport | None = None,
     ) -> None:
         """Create the adapter with a Gemini API key and optional test transport."""
@@ -56,7 +62,7 @@ class VeoVideoProvider:
         return ProviderHealth(
             available=bool(self._api_key),
             checked_at=datetime.now(UTC),
-            reason=None if self._api_key else "GEMINI_API_KEY is not configured.",
+            reason=None if self._api_key else "Veo's configured API key is missing.",
         )
 
     def can_accept(self, request: VideoGenerationRequest) -> bool:
@@ -74,7 +80,7 @@ class VeoVideoProvider:
         if not self.can_accept(request):
             raise ProviderUnavailableError.from_message(
                 code="video_request_not_accepted",
-                message="Veo 3.1 Fast requires a 9:16 clip of 4, 6, or 8 seconds.",
+                message="Veo 3.1 requires a 9:16 clip of 4, 6, or 8 seconds.",
                 retriable=False,
                 failure_step="video_generation",
             )

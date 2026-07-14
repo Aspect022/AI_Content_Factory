@@ -6,7 +6,6 @@ from time import sleep
 
 from app.config import AppConfig, VideoProviderProfile
 from app.exceptions import ConfigurationError, ErrorInfo
-from app.providers.gemini_omni_video_provider import GeminiOmniVideoProvider
 from app.providers.openrouter_video_provider import OpenRouterVideoProvider
 from app.providers.router import ProviderRouter
 from app.providers.veo_provider import VeoVideoProvider
@@ -32,14 +31,6 @@ def build_video_generation_service(configuration: AppConfig) -> VideoGenerationS
 
 
 def _build_video_provider(profile: VideoProviderProfile) -> object:
-    if profile.provider == "gemini_omni":
-        return GeminiOmniVideoProvider(
-            profile.api_key,
-            name=profile.name,
-            priority=profile.priority,
-            model=profile.model,
-            duration_seconds=profile.duration_seconds or 10,
-        )
     if profile.provider in {"google_flow", "google_veo"}:
         return VeoVideoProvider(
             profile.api_key,
@@ -53,6 +44,7 @@ def _build_video_provider(profile: VideoProviderProfile) -> object:
             name=profile.name,
             priority=profile.priority,
             model=profile.model,
+            duration_seconds=profile.duration_seconds or 10,
         )
     raise ConfigurationError(
         ErrorInfo(

@@ -130,3 +130,36 @@ accepted 10-second duration rather than the pipeline's general 8-second
 preference; an optional profile `duration_seconds` field is available for other
 OpenRouter video models. Veo requests use a numeric `durationSeconds` value as
 required by the Gemini API.
+
+## Gemini Omni Flash removal; OpenRouter primary, Veo 3.1 Lite fallback only
+
+The prior "Video provider priority override" section put Gemini Omni Flash
+first. In production this failed every run: the project's Gemini API key has
+no billing/preview entitlement for `gemini-omni-flash-preview`, so every
+attempt returned a rejected, non-retriable request regardless of the router's
+retry budget. The owner confirmed directly (not through the pipeline) that
+their Gemini API credentials also could not call the standard-tier Veo model
+(`veo-3.1-generate-preview`), but could successfully call Veo's lowest-cost
+preview tier.
+
+This supersedes the prior order. `VIDEO_PROVIDER_PROFILES_JSON` now configures
+exactly two providers:
+
+1. `openrouter_video` (provider `openrouter`, model `alibaba/wan-2.6:free`) —
+   primary.
+2. `google_veo` (provider `google_veo`, model
+   `veo-3.1-lite-generate-preview`) — the only fallback.
+
+`GeminiOmniVideoProvider` and its module were deleted rather than left
+registered-but-unused, so a future profile typo cannot silently reintroduce a
+provider with no working credentials. `VeoVideoProvider`'s constructor default
+was changed from the Fast tier to `veo-3.1-lite-generate-preview` to match;
+callers that need a different Veo tier still select it explicitly through the
+profile's `model` field. `GEMINI_API_KEY` remains required only for text
+generation (`GeminiTextProvider`); the Veo fallback keeps using the separate
+`GEMINI_FALLBACK_API_KEY` so a text-key quota or revocation event cannot also
+take down the video fallback.
+
+Operators must update the `VIDEO_PROVIDER_PROFILES_JSON` GitHub secret to the
+two-entry form above; the committed `.env.example` is documentation only and
+is not read at runtime.

@@ -10,7 +10,7 @@ from app.exceptions import ProviderUnavailableError
 from app.providers.base import VideoGenerationRequest
 from app.providers.openrouter_video_provider import OpenRouterVideoProvider
 from app.providers.router import ProviderRouter
-from app.providers.veo_provider import VideoHttpResponse
+from app.providers.veo_provider import VeoVideoProvider, VideoHttpResponse
 from app.video.factory import build_video_generation_service
 from app.video.generation import VideoGenerationService
 
@@ -114,3 +114,10 @@ def test_video_factory_uses_only_ordered_runtime_profiles(
     )
 
     assert isinstance(service, VideoGenerationService)
+    providers = service._router.available_providers()  # noqa: SLF001
+    assert [provider.name for provider in providers] == [
+        "openrouter_video",
+        "google_veo",
+    ]
+    assert isinstance(providers[0], OpenRouterVideoProvider)
+    assert isinstance(providers[1], VeoVideoProvider)
